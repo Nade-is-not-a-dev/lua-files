@@ -59,7 +59,7 @@ def main():
         "--  File ini HASIL BUILD dari modul-modul di folder suite/.\n"
         "--  Jangan edit langsung -- edit modulnya, lalu push.\n"
         "-- ============================================================\n"
-        f'print("[VL Suite] v{version} @ {sha[:7]} loaded")\n\n'
+        f'print("[VL Suite] v{version} @ {sha[:7]} -- loading {len(manifest)} module(s)...")\n\n'
     )
 
     parts = [header]
@@ -74,6 +74,12 @@ def main():
         parts.append(
             f"\n-- ===== module: suite/{entry} =====\n" + src
         )
+
+    parts.append(
+        "\n-- ===== end of modules =====\n"
+        f'print("[VL Suite] READY -- all {len(manifest)} module(s) loaded '
+        f'(v{version} @ {sha[:7]})")\n'
+    )
 
     os.makedirs(OUT_DIR, exist_ok=True)
     with open(OUT_FILE, "w", encoding="utf-8") as f:
