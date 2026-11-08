@@ -243,6 +243,22 @@ function M.Build(deps)
 	catalog.Parent = main
 	corner(catalog, 12)
 
+	-- Tombol keluar PERSIS milik CAC: ImageButton 'Exit' ikon X
+	-- (rbxassetid://9154608052), tanpa latar, Size 0.035,
+	-- Position (0.98, 0.03), AnchorPoint (1, 0), ZIndex 202.
+	local exitBtn = Instance.new("ImageButton")
+	exitBtn.Name = "Exit"
+	exitBtn.Size = UDim2.fromScale(0.035, 0.035)
+	exitBtn.Position = UDim2.fromScale(0.98, 0.03)
+	exitBtn.AnchorPoint = Vector2.new(1, 0)
+	exitBtn.BackgroundTransparency = 1
+	exitBtn.Image = "rbxassetid://9154608052"
+	exitBtn.ZIndex = 202
+	exitBtn.Parent = catalog
+	local exitRatio = Instance.new("UIAspectRatioConstraint")
+	exitRatio.AspectRatio = 1
+	exitRatio.Parent = exitBtn
+
 	-- Baris kategori (tab) di atas, gaya Categories CAC.
 	local tabsBar = Instance.new("Frame")
 	tabsBar.Name = "Categories"
@@ -629,23 +645,6 @@ function M.Build(deps)
 	refreshBtn.Activated:Connect(function()
 		refreshPreview()
 	end)
-	local closeBtn = squareButton("X", 2)
-
-	-- Tombol close utama: pojok kanan atas layar (level Holder,
-	-- di atas panel Catalog), selalu terlihat.
-	local holderClose = Instance.new("TextButton")
-	holderClose.Name = "CloseButton"
-	holderClose.Size = UDim2.fromOffset(44, 44)
-	holderClose.Position = UDim2.new(1, -10, 0, 10)
-	holderClose.AnchorPoint = Vector2.new(1, 0)
-	holderClose.BackgroundColor3 = RED
-	holderClose.TextColor3 = WHITE
-	holderClose.Font = Enum.Font.GothamBold
-	holderClose.TextSize = 18
-	holderClose.Text = "X"
-	holderClose.ZIndex = 50
-	holderClose.Parent = holder
-	corner(holderClose, 10)
 
 	------------------------------------------------------------
 	-- Penyegaran daftar (strip + grid) dan API modul
@@ -746,8 +745,7 @@ function M.Build(deps)
 	function api.IsVisible()
 		return holder.Visible
 	end
-	closeBtn.Activated:Connect(api.Hide)
-	holderClose.Activated:Connect(api.Hide)
+	exitBtn.Activated:Connect(api.Hide)
 
 	showTab("Wearing")
 	api.Refresh()
