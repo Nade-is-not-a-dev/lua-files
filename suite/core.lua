@@ -320,3 +320,40 @@ local Knit = require(RS:WaitForChild("Packages"):WaitForChild("Knit"))
 local ContentItem = require(RS:WaitForChild("Content"):WaitForChild("Item"))
 local Gamemode = require(RS:WaitForChild("Configuration"):WaitForChild("Gamemode"))
 local TweenService = game:GetService("TweenService")
+
+----------------------------------------------------------------
+-- Pelacak READY suite: baris READY hanya dicetak SETELAH
+-- semua modul terdaftar benar-benar selesai init (real
+-- time), bukan saat chunk selesai dimuat. Konvensi modul:
+-- 1) di top level file: suiteExpectModule("nama-modul")
+-- 2) di akhir init-nya: suiteModuleLoaded("nama-modul")
+-- build.py menutup file gabungan dengan suiteArmReady(...)
+-- yang memasang teks baris READY-nya.
+----------------------------------------------------------------
+local SuiteExpected = {}
+local SuiteDone = {}
+local SuiteReadyMessage = nil
+local SuiteReadyFired = false
+local function suiteCheckReady()
+	if SuiteReadyFired or not SuiteReadyMessage then
+		return
+	end
+	for name in pairs(SuiteExpected) do
+		if not SuiteDone[name] then
+			return
+		end
+	end
+	SuiteReadyFired = true
+	print(SuiteReadyMessage)
+end
+local function suiteExpectModule(name)
+	SuiteExpected[name] = true
+end
+local function suiteModuleLoaded(name)
+	SuiteDone[name] = true
+	suiteCheckReady()
+end
+local function suiteArmReady(message)
+	SuiteReadyMessage = message
+	suiteCheckReady()
+end

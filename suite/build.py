@@ -77,7 +77,7 @@ def main():
 
     parts.append(
         "\n-- ===== end of modules =====\n"
-        f'print("[VL Suite] READY -- all {len(manifest)} module(s) loaded '
+        f'suiteArmReady("[VL Suite] READY -- all {len(manifest)} module(s) loaded '
         f'(v{version} @ {sha[:7]})")\n'
     )
 

@@ -669,6 +669,8 @@ local function initFeatureShared()
 	applyFavorites()
 	FeatureSharedReady = true
 	print(("[VL Suite] feature-shared ready in %.2fs"):format(os.clock() - t0))
+	suiteModuleLoaded("feature-shared")
 end
 
+suiteExpectModule("feature-shared")
 task.spawn(initFeatureShared)

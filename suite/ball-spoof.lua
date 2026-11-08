@@ -496,5 +496,7 @@ local function initBallSpoof()
 		InventoryController.Selected:set(S.fakeEquipped)
 	end
 	print(("[VL Suite] ball-spoof ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, tShared - t0))
+	suiteModuleLoaded("ball-spoof")
 end
+suiteExpectModule("ball-spoof")
 task.spawn(initBallSpoof)
