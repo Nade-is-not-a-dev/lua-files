@@ -15,7 +15,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SUITE = os.path.join(ROOT, "suite")
 OUT_DIR = os.path.join(ROOT, "dist")
 OUT_FILE = os.path.join(OUT_DIR, "vl-suite.lua")
-LOADSTRING_URL = "https://nade-is-not-a-dev.github.io/lua-files/vl-suite.lua"
+LOADSTRING_URL = "https://nade-is-not-a-dev.github.io/vl-suite/vl-suite.lua"
 
 
 def read(path):

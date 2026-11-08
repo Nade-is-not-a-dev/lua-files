@@ -1,18 +1,23 @@
-# lua-files
+# vl-suite
 
-Lua modules fetched at runtime by my Roblox scripts (via `game:HttpGet` on the
-raw file URL, with a cache-busting query string so edits here go live on the
-next script run — no need to re-obfuscate or redistribute the host script).
+Modular client-side spoof suite for **Volleyball Legends** (Roblox),
+built from separate feature modules that are concatenated into one
+script and published via GitHub Pages.
 
-## Contents
+Loadstring:
 
-- `avatar-lite/ui.lua` — fullscreen UI for **VL Avatar Lite** (the client-side
-  avatar changer inside Volleyball Legends), recreating the Catalog Avatar
-  Creator game's CatalogGUI layout. The host script keeps all state and logic;
-  this module only builds and renders the interface.
-
-Raw URL pattern:
-
+```lua
+loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/vl-suite/vl-suite.lua"))()
 ```
-https://raw.githubusercontent.com/Nade-is-not-a-dev/lua-files/main/<path>?v=<random>
-```
+
+## Layout
+
+- `suite/` — the modules and the build script (`build.py`
+  concatenates the files listed in `suite/manifest.txt`, stamps
+  the version from `suite/VERSION`, and writes `dist/vl-suite.lua`).
+  See `suite/README.md` for the module list and conventions.
+- `.github/workflows/build-suite.yml` — on every push to `suite/**`:
+  build, syntax-check with luau-compile, deploy to GitHub Pages.
+
+Everything is client-side only: effects are visible on your own
+screen, nothing is sent to the server.

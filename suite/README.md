@@ -6,7 +6,7 @@ GitHub Actions menjadi satu file untuk loadstring.
 ## Loadstring
 
 ```lua
-loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/lua-files/vl-suite.lua"))()
+loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/vl-suite/vl-suite.lua"))()
 ```
 
 ## Layout
