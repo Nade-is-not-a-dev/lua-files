@@ -63,7 +63,7 @@ function M.Build(deps)
 	gui.Name = "VLAvatarLiteGui"
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = true
-	gui.DisplayOrder = 5
+	gui.DisplayOrder = 999 -- selalu di atas UI game (App VL tertimpa ini)
 	gui.Parent = deps.guiParent
 
 	local holder = Instance.new("Frame")
@@ -631,6 +631,22 @@ function M.Build(deps)
 	end)
 	local closeBtn = squareButton("X", 2)
 
+	-- Tombol close utama: pojok kanan atas layar (level Holder,
+	-- di atas panel Catalog), selalu terlihat.
+	local holderClose = Instance.new("TextButton")
+	holderClose.Name = "CloseButton"
+	holderClose.Size = UDim2.fromOffset(44, 44)
+	holderClose.Position = UDim2.new(1, -10, 0, 10)
+	holderClose.AnchorPoint = Vector2.new(1, 0)
+	holderClose.BackgroundColor3 = RED
+	holderClose.TextColor3 = WHITE
+	holderClose.Font = Enum.Font.GothamBold
+	holderClose.TextSize = 18
+	holderClose.Text = "X"
+	holderClose.ZIndex = 50
+	holderClose.Parent = holder
+	corner(holderClose, 10)
+
 	------------------------------------------------------------
 	-- Penyegaran daftar (strip + grid) dan API modul
 	------------------------------------------------------------
@@ -731,6 +747,7 @@ function M.Build(deps)
 		return holder.Visible
 	end
 	closeBtn.Activated:Connect(api.Hide)
+	holderClose.Activated:Connect(api.Hide)
 
 	showTab("Wearing")
 	api.Refresh()
