@@ -8,8 +8,9 @@
 -- applyFavorites, injectInventory, dan pengawatan event
 -- bersama (ProfileUpdated, penjaga drift, InventoryChanged).
 --
--- Modul fitur (ball-spoof, remaining-features, ...) berjalan
--- SETELAH file ini dan memakai local-local di sini. Panggilan
+-- Modul fitur (ball-spoof, score-fx, settings, player-card,
+-- emote, jersey, equip-router) berjalan SETELAH file ini dan
+-- memakai local-local di sini. Panggilan
 -- balik ke modul fitur lewat FeatureAPI (diisi modul fitur)
 -- karena urutan deklarasi satu chunk.
 ----------------------------------------------------------------
@@ -500,6 +501,7 @@ local function resolvedPromise(...)
 end
 
 local function initFeatureShared()
+	local t0 = os.clock()
 	-- Tunggu controller & service siap (KnitStart selesai). GetController
 	-- bisa error sebelum Knit hidup, jadi dibungkus pcall; timeout 90
 	-- detik agar bagian lain tidak ikut tertahan selamanya.
@@ -666,6 +668,7 @@ local function initFeatureShared()
 	applyEquipped()
 	applyFavorites()
 	FeatureSharedReady = true
+	print(("[VL Suite] feature-shared ready in %.2fs"):format(os.clock() - t0))
 end
 
 task.spawn(initFeatureShared)

@@ -415,10 +415,12 @@ local ALERT_FX_WORLD = "This score effect physically affects players. The spoof 
 FeatureAPI.scanWeldedBalls = scanWeldedBalls
 
 local function initBallSpoof()
+	local t0 = os.clock()
 	if not awaitFeatureShared(90) then
 		warn("[VLBallSpoof] feature-shared tidak siap; modul bola dilewati.")
 		return
 	end
+	local tShared = os.clock()
 	if not S.installedBall then
 		S.installedBall = true
 	-- Ball.new: ganti model + Item dengan skin palsu saat spawn.
@@ -493,6 +495,6 @@ local function initBallSpoof()
 	if S.fakeEquipped and InventoryController.Selected then
 		InventoryController.Selected:set(S.fakeEquipped)
 	end
+	print(("[VL Suite] ball-spoof ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, tShared - t0))
 end
-
 task.spawn(initBallSpoof)
