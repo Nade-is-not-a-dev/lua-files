@@ -8,8 +8,8 @@
 # dikembalikan satu per satu ke folder modules/.
 core.lua
 feature-shared.lua
+modules/init.lua
 modules/ball-spoof.lua
 modules/score-fx.lua
 modules/player-card.lua
 modules/auto-shiftlock.lua
-modules/equip-router.lua

@@ -24,18 +24,17 @@ Inti suite di root repo, modul fitur di `modules/`:
   fitur memakai alatnya sendiri dan mendaftarkan kategorinya
   lewat suiteActivateFeature("Ball" / "Jersey" / ...), jadi
   alat bersama hanya menyentuh kategori yang aktif.
+- `modules/init.lua` — sistem yang dimuat AWAL, bukan
+  fitur tampilan: pengawatan event bersama, sistem equip
+  (bungkus InventoryService.Equip), dan sistem favorite
+  (bungkus InventoryService.ToggleFavorite). Modul fitur
+  tidak memasangnya sendiri.
 - `modules/ball-spoof.lua` — modul fitur: spoof bola.
 - `modules/score-fx.lua` — modul fitur: spoof Score FX
   (resolver efek palsu / Random Favorites, carrier, suara
   poin, bungkus PlayScoreEffect, scrub gembok preview).
 - `modules/player-card.lua` — modul fitur: spoof kartu
-  pemain (resolver kartu tampil + bungkus ToggleFavorite
-  untuk favorit kartu/Score FX palsu + DisplayFlashCard).
-- `modules/equip-router.lua` — intersepsi
-  InventoryService:Equip: klik equip item palsu dirutekan
-  ke lapis lokal, item asli diteruskan ke server. Paling
-  akhir di manifest; hanya merutekan kategori yang
-  modulnya aktif.
+  pemain (resolver kartu tampil + DisplayFlashCard).
 - `modules/auto-shiftlock.lua` — putar karakter menghadap
   kamera saat lompat + Redirection/Boom Jump (dulu
   "Face Camera"); tidak menunggu feature-shared.

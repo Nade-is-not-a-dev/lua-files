@@ -1,25 +1,23 @@
 ----------------------------------------------------------------
--- modules/equip-router.lua -- Modul fitur: Router Equip
+-- modules/init.lua -- Modul init: sistem yang dimuat AWAL
 --
--- Intersepsi InventoryService:Equip -- router hybrid
--- asli/palsu. PALING AKHIR di manifest karena menyebut
--- fungsi modul fitur lain (mis. ensureFxCarrier milik
--- score-fx). Hanya kategori yang modulnya AKTIF yang
--- dirutekan ke lapis palsu (SuiteActive); kategori lain
--- diteruskan ke equip asli apa adanya. Router ini juga
--- yang menangkap S.originalEquip -- tanpa dia,
--- ensureFxCarrier tidak bisa memasang carrier.
+-- Isinya bukan fitur tampilan, melainkan sistem lintas
+-- fitur yang harus terpasang sebelum modul lain berjalan
+-- dan tidak dipasang oleh modul fitur secara langsung:
+--   1) pengawatan event bersama (installSuiteWiring),
+--   2) sistem equip -- bungkus InventoryService.Equip
+--      (router hybrid asli/palsu; juga menangkap
+--      S.originalEquip untuk carrier Score FX),
+--   3) sistem favorite -- bungkus
+--      InventoryService.ToggleFavorite (favorit kartu /
+--      Score FX palsu disimpan lokal; asli diteruskan).
+-- Karena file ini dimuat SEBELUM modul fitur, panggilan ke
+-- fungsi milik modul lain wajib lewat FeatureAPI (registry
+-- feature-shared), bukan local file lain.
 ----------------------------------------------------------------
 
-local function initEquipRouter()
-	local t0 = os.clock()
-	if not awaitFeatureShared(90) then
-		warn("[VL Suite] equip-router skipped: feature-shared not ready.")
-		return
-	end
-	local tShared = os.clock()
-	loadLocal()
-	installSuiteWiring()
+-- Sistem equip (dulu: modul equip-router).
+local function installEquipSystem()
 	if not S.installedRouter then
 		S.installedRouter = true
 	-- InventoryService:Equip -- hybrid asli/palsu.
@@ -56,12 +54,12 @@ local function initEquipRouter()
 				saveLocal()
 				-- Server tidak tahu apa-apa: pasang kembali yang
 				-- asli secara lokal.
-				restoreJerseyRender()
+				if FeatureAPI.restoreJerseyRender then FeatureAPI.restoreJerseyRender() end
 			else
 				S.fakeJersey = id
 				applyEquipped()
 				saveLocal()
-				applyJerseyRender()
+				if FeatureAPI.applyJerseyRender then FeatureAPI.applyJerseyRender() end
 			end
 			return resolvedPromise(true)
 		end
@@ -80,7 +78,7 @@ local function initEquipRouter()
 			end
 			if S.fakeEmotes[index] == id then
 				S.fakeEmotes[index] = nil -- slot yang sama = lepas
-				applyEmotes()
+				if FeatureAPI.applyEmotes then FeatureAPI.applyEmotes() end
 				saveLocal()
 			else
 				local function doEquip()
@@ -92,11 +90,11 @@ local function initEquipRouter()
 						end
 					end
 					S.fakeEmotes[index] = id
-					applyEmotes()
+					if FeatureAPI.applyEmotes then FeatureAPI.applyEmotes() end
 					saveLocal()
 				end
 				-- Emote berproperti: efeknya server-driven -> alert.
-				if PROP_EMOTES[id] then
+				if FeatureAPI.propEmotes and FeatureAPI.propEmotes[id] then
 					local item = ContentItem:Get(id)
 					showSpoofAlert((item and item.DisplayName) or id, ALERT_EMOTE_PROP, doEquip)
 				else
@@ -132,7 +130,7 @@ local function initEquipRouter()
 					S.fakeScoreFx = id
 					applyEquipped()
 					saveLocal()
-					task.defer(ensureFxCarrier)
+					if FeatureAPI.ensureFxCarrier then task.defer(FeatureAPI.ensureFxCarrier) end
 				end
 				-- Efek berpengaruh fisik: pengaruhnya hanya berlaku
 				-- lokal untuk versi spoof -> alert dulu.
@@ -173,7 +171,7 @@ local function initEquipRouter()
 				-- detik agar melewati jendela fxUserEquipAt yang
 				-- baru saja diset klik ini; ensureFxCarrier menjaga
 				-- dirinya sendiri bila lapis ternyata dimatikan.
-				task.delay(6, ensureFxCarrier)
+				task.delay(6, function() if FeatureAPI.ensureFxCarrier then FeatureAPI.ensureFxCarrier() end end)
 			elseif S.fakeScoreFx then
 				S.fakeScoreFx = nil
 				applyEquipped()
@@ -199,20 +197,80 @@ local function initEquipRouter()
 		end
 		return originalEquip(_, id, ...)
 	end
-
-	-- Properti emote palsu: Handler.run milik item tersedia utuh di
-	-- klien, tapi TIDAK ada kode klien yang memanggilnya -- normalnya
-	-- server yang menjalankannya saat menerima InventoryService:Use.
-	-- Untuk emote palsu yang sedang ter-equip, jalankan secara lokal
-	-- saat emote dimainkan (bungkus Use di bawah): properti muncul
-	-- menempel di karakter, hanya terlihat di layar ini. Cleanup
-	-- mengikuti pola roda resmi: emote non-loop dibersihkan setelah
-	-- panjang animasinya, StopEmotes membersihkan semuanya.
-	local activeEmoteProps = {} -- [id emote] = fungsi cleanup
 	end
-	print(("[VL Suite] equip-router ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, tShared - t0))
-	suiteModuleLoaded("equip-router")
 end
 
-suiteExpectModule("equip-router")
-task.spawn(initEquipRouter)
+-- Sistem favorite (dulu: bagian dari modul player-card).
+local function installFavoriteSystem()
+	if S.installedFavorite then
+		return
+	end
+	S.installedFavorite = true
+	-- Favorit kartu palsu: server menolak memfavoritkan item yang
+	-- tidak dimiliki, jadi untuk kartu yang belum dimiliki toggle
+	-- disimpan lokal (S.fakeCardFavorites) dan diterapkan ke Value
+	-- Favorited yang dibaca UI.
+	if InventoryService.ToggleFavorite then
+		local originalToggleFavorite = InventoryService.ToggleFavorite
+		InventoryService.ToggleFavorite = function(_, id, ...)
+			if isCard(id) and not S.realOwned[id] then
+				local added = not S.fakeCardFavorites[id]
+				if added then
+					S.fakeCardFavorites[id] = true
+				else
+					S.fakeCardFavorites[id] = nil
+				end
+				applyFavorites()
+				saveLocal()
+				-- TryToggleFavorite meneruskan nilai KEDUA hasil
+				-- ToggleFavorite sebagai teks notifikasi; nil membuat
+				-- komponen Notify error -- selalu sertakan pesan.
+				return resolvedPromise(true, added and "Added to favorites." or "Removed from favorites.")
+			end
+			if isScoreFx(id) and not S.realOwned[id] then
+				local added = not S.fakeFxFavorites[id]
+				if added then
+					S.fakeFxFavorites[id] = true
+				else
+					S.fakeFxFavorites[id] = nil
+				end
+				applyFavorites()
+				saveLocal()
+				return resolvedPromise(true, added and "Added to favorites." or "Removed from favorites.")
+			end
+			local promise = originalToggleFavorite(_, id, ...)
+			-- Server tidak selalu mengirim pesan (saat melepas
+			-- favorit pesannya nil) dan TryToggleFavorite milik game
+			-- tidak menjaganya, sehingga komponen Notify error
+			-- "Unable to assign property Text ... got nil". Isi
+			-- pesan bawaan bila server tidak mengirimnya.
+			if promise and type(promise.andThen) == "function" then
+				return promise:andThen(function(success, message)
+					if message == nil then
+						message = success and "Favorites updated." or "Failed to update favorites."
+					end
+					return success, message
+				end)
+			end
+			return promise
+		end
+	end
+end
+
+local function initEarlySystems()
+	local t0 = os.clock()
+	if not awaitFeatureShared(90) then
+		warn("[VL Suite] init skipped: feature-shared not ready.")
+		return
+	end
+	local tShared = os.clock()
+	loadLocal()
+	installSuiteWiring()
+	installEquipSystem()
+	installFavoriteSystem()
+	print(("[VL Suite] init ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, tShared - t0))
+	suiteModuleLoaded("init")
+end
+
+suiteExpectModule("init")
+task.spawn(initEarlySystems)

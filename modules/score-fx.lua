@@ -252,12 +252,11 @@ local function initScoreFx()
 	local tShared = os.clock()
 	FeatureAPI.ensureFxCarrier = ensureFxCarrier
 	-- Pakai alat feature-shared sendiri: muat state lokal
-	-- (fakeScoreFx + favorit FX dari simpanan), pasang
-	-- pengawatan event bersama, suntikkan kategori
+	-- (fakeScoreFx + favorit FX dari simpanan), suntikkan
+	-- kategori
 	-- ScoreEffect ke inventory, terapkan lapisan equip FX
 	-- dan gabungan favorit FX.
 	loadLocal()
-	installSuiteWiring()
 	injectInventory()
 	applyEquipped()
 	applyFavorites()

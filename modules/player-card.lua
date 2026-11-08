@@ -1,10 +1,9 @@
 ----------------------------------------------------------------
 -- modules/player-card.lua -- Modul fitur: Player Card Spoof
 --
--- Resolver kartu tampil (termasuk RANDOM FAVORITES), bungkus
--- InventoryService.ToggleFavorite (favorit kartu DAN Score
--- FX palsu disimpan lokal; favorit asli diteruskan), dan
--- bungkus PlayerCardController.DisplayFlashCard.
+-- Resolver kartu tampil (termasuk RANDOM FAVORITES) dan
+-- bungkus PlayerCardController.DisplayFlashCard. (Bungkus
+-- ToggleFavorite sekarang di modules/init.lua.)
 ----------------------------------------------------------------
 
 -- Kartu yang dipakai untuk momen tampil (flash card / MVP):
@@ -47,65 +46,15 @@ local function initPlayerCard()
 	end
 	local tShared = os.clock()
 	-- Pakai alat feature-shared sendiri: muat state lokal,
-	-- pasang pengawatan event bersama, suntikkan kategori
+	-- suntikkan kategori
 	-- PlayerCard ke inventory, terapkan lapisan equip kartu
 	-- dan gabungan favorit.
 	loadLocal()
-	installSuiteWiring()
 	injectInventory()
 	applyEquipped()
 	applyFavorites()
 	if not S.installedCard then
 		S.installedCard = true
-	-- Favorit kartu palsu: server menolak memfavoritkan item yang
-	-- tidak dimiliki, jadi untuk kartu yang belum dimiliki toggle
-	-- disimpan lokal (S.fakeCardFavorites) dan diterapkan ke Value
-	-- Favorited yang dibaca UI.
-	if InventoryService.ToggleFavorite then
-		local originalToggleFavorite = InventoryService.ToggleFavorite
-		InventoryService.ToggleFavorite = function(_, id, ...)
-			if isCard(id) and not S.realOwned[id] then
-				local added = not S.fakeCardFavorites[id]
-				if added then
-					S.fakeCardFavorites[id] = true
-				else
-					S.fakeCardFavorites[id] = nil
-				end
-				applyFavorites()
-				saveLocal()
-				-- TryToggleFavorite meneruskan nilai KEDUA hasil
-				-- ToggleFavorite sebagai teks notifikasi; nil membuat
-				-- komponen Notify error -- selalu sertakan pesan.
-				return resolvedPromise(true, added and "Added to favorites." or "Removed from favorites.")
-			end
-			if isScoreFx(id) and not S.realOwned[id] then
-				local added = not S.fakeFxFavorites[id]
-				if added then
-					S.fakeFxFavorites[id] = true
-				else
-					S.fakeFxFavorites[id] = nil
-				end
-				applyFavorites()
-				saveLocal()
-				return resolvedPromise(true, added and "Added to favorites." or "Removed from favorites.")
-			end
-			local promise = originalToggleFavorite(_, id, ...)
-			-- Server tidak selalu mengirim pesan (saat melepas
-			-- favorit pesannya nil) dan TryToggleFavorite milik game
-			-- tidak menjaganya, sehingga komponen Notify error
-			-- "Unable to assign property Text ... got nil". Isi
-			-- pesan bawaan bila server tidak mengirimnya.
-			if promise and type(promise.andThen) == "function" then
-				return promise:andThen(function(success, message)
-					if message == nil then
-						message = success and "Favorites updated." or "Failed to update favorites."
-					end
-					return success, message
-				end)
-			end
-			return promise
-		end
-	end
 	-- Momen tampil kartu (flash card saat mencetak poin + kartu MVP)
 	-- digerakkan event server yang membawa id kartu ASLI. Untuk
 	-- event tentang pemain lokal, tukar id-nya dengan kartu palsu /

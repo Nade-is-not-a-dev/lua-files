@@ -423,10 +423,9 @@ local function initBallSpoof()
 	end
 	local tShared = os.clock()
 	-- Pakai alat feature-shared sendiri: muat state lokal,
-	-- pasang pengawatan event bersama, suntikkan kategori
+	-- suntikkan kategori
 	-- Ball saja ke inventory, terapkan lapisan equip bola.
 	loadLocal()
-	installSuiteWiring()
 	injectInventory()
 	applyEquipped()
 	if not S.installedBall then
