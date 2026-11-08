@@ -35,6 +35,9 @@ Inti suite di root repo, modul fitur di `modules/`:
   poin, bungkus PlayScoreEffect, scrub gembok preview).
 - `modules/player-card.lua` — modul fitur: spoof kartu
   pemain (resolver kartu tampil + DisplayFlashCard).
+- `modules/jersey.lua` — modul fitur: spoof jersey
+  (render lokal di karakter sendiri + penjaga timpaan
+  server + bungkus Jersey Preview).
 - `modules/auto-shiftlock.lua` — putar karakter menghadap
   kamera saat lompat + Redirection/Boom Jump (dulu
   "Face Camera"); tidak menunggu feature-shared.
@@ -43,8 +46,8 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `VERSION` — versi suite (naikkan saat rilis berarti).
 - `build.py` — penggabung; berjalan lokal maupun di Actions.
 
-Modul fitur lain (settings, emote, jersey) sedang
-dihapus sementara dari repo —
+Modul fitur lain (settings, emote) sedang dihapus
+sementara dari repo —
 sumbernya tersimpan di riwayat git v0.5.1 dan dikembalikan
 satu per satu.
 

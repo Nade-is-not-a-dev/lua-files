@@ -12,4 +12,5 @@ modules/init.lua
 modules/ball-spoof.lua
 modules/score-fx.lua
 modules/player-card.lua
+modules/jersey.lua
 modules/auto-shiftlock.lua
