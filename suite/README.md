@@ -13,6 +13,13 @@ loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/lua-files/vl-suite.
 
 - `core.lua` — inti bersama: game guard, state, helper,
   persistensi.
+- `feature-shared.lua` — infrastruktur fitur Bagian A:
+  akuisisi controller Knit, klasifikasi item, state spoof,
+  apply bersama, pengawatan event bersama.
+- `ball-spoof.lua` — modul fitur pertama: spoof bola saja.
+- `remaining-features.lua` — sementara: fitur Bagian A lain
+  (Score FX, settings, kartu, emote, jersey, router equip)
+  menunggu modulnya masing-masing.
 - Modul fitur (menyusul): satu file per fitur di folder ini,
   didaftarkan di `manifest.txt` sesuai urutan jalan.
 - `manifest.txt` — urutan penggabungan.

@@ -1,5 +1,7 @@
 # Urutan penggabungan VL Suite (satu file per baris, path relatif
 # terhadap folder suite/). Baris diawali # diabaikan.
-# Modul fitur ditambahkan di bawah core.lua sesuai urutan jalan.
+# Urutan penting: core -> feature-shared -> modul fitur.
 core.lua
+feature-shared.lua
 ball-spoof.lua
+remaining-features.lua
