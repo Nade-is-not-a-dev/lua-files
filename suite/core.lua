@@ -275,7 +275,7 @@ if game.GameId ~= VL_GAME_ID then
 	local content = rs:WaitForChild("Content", 20)
 	local looksLikeVL = content and content:FindFirstChild("Item") and rf:FindFirstChild("Controllers")
 	if not looksLikeVL then
-		warn("[VLSpoof] Not Volleyball Legends (GameId " .. tostring(game.GameId) .. ") -- script stopped.")
+		warn("[VL Suite] Not Volleyball Legends (GameId " .. tostring(game.GameId) .. ") -- script stopped.")
 		return
 	end
 end

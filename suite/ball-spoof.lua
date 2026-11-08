@@ -418,7 +418,7 @@ suiteActivateFeature("Ball")
 local function initBallSpoof()
 	local t0 = os.clock()
 	if not awaitFeatureShared(90) then
-		warn("[VLBallSpoof] feature-shared tidak siap; modul bola dilewati.")
+		warn("[VL Suite] ball-spoof skipped: feature-shared not ready.")
 		return
 	end
 	local tShared = os.clock()

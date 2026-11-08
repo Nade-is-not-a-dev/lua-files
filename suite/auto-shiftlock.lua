@@ -59,12 +59,10 @@ local function initAutoShiftlock()
 				end)
 			end)
 			if ok then
-				print("[AutoShiftlock] ability path active (Redirection Jump + Boom Jump).")
 				return
 			end
 			task.wait(0.5)
 		end
-		warn("[AutoShiftlock] AbilityService not found -- ability path inactive, jump path still running.")
 	end)
 
 	-- Jalur lompat: deteksi lift-off tiap karakter.
@@ -112,7 +110,6 @@ local function initAutoShiftlock()
 		task.spawn(watchCharacter, character)
 	end)
 
-	print("[AutoShiftlock] jump path active. LOCK_DIRECTION =", LOCK_DIRECTION)
 	print(("[VL Suite] auto-shiftlock ready in %.2fs"):format(os.clock() - t0))
 	suiteModuleLoaded("auto-shiftlock")
 end

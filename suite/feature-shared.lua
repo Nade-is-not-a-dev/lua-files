@@ -675,7 +675,7 @@ local function initFeatureShared()
 		and InventoryService and DataService) or os.clock() > deadline
 	if not (InventoryController and InventoryController.Equipped and InventoryController.Inventory
 		and InventoryService and DataService) then
-		warn("[VLBallSpoof] Controllers/services not ready after 90 seconds; ball spoof part skipped.")
+		warn("[VL Suite] feature-shared not ready after 90 seconds; dependent modules skipped.")
 		return
 	end
 	-- Tunggu state awal dari server benar-benar ter-seed ke controller.
