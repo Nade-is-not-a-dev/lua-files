@@ -38,6 +38,8 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `modules/jersey.lua` — modul fitur: spoof jersey
   (render lokal di karakter sendiri + penjaga timpaan
   server + bungkus Jersey Preview).
+- `modules/emote.lua` — modul fitur: spoof emote (slot
+  roda palsu + prop lokal untuk emote berproperti).
 - `modules/auto-shiftlock.lua` — putar karakter menghadap
   kamera saat lompat + Redirection/Boom Jump (dulu
   "Face Camera"); tidak menunggu feature-shared.
@@ -46,8 +48,8 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `VERSION` — versi suite (naikkan saat rilis berarti).
 - `build.py` — penggabung; berjalan lokal maupun di Actions.
 
-Modul fitur lain (settings, emote) sedang dihapus
-sementara dari repo —
+Modul fitur lain (settings) sedang dihapus sementara
+dari repo —
 sumbernya tersimpan di riwayat git v0.5.1 dan dikembalikan
 satu per satu.
 

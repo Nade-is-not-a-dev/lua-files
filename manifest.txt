@@ -13,4 +13,5 @@ modules/ball-spoof.lua
 modules/score-fx.lua
 modules/player-card.lua
 modules/jersey.lua
+modules/emote.lua
 modules/auto-shiftlock.lua

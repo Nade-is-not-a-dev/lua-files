@@ -679,7 +679,7 @@ local function initFeatureShared()
 			EffectController = Knit.GetController("EffectController")
 			ScoreEffectPreviewController = Knit.GetController("ScoreEffectPreviewController")
 		end)
-		task.wait(0.25)
+		task.wait(0.1)
 	until (InventoryController and InventoryController.Equipped and InventoryController.Inventory
 		and InventoryService and DataService) or os.clock() > deadline
 	if not (InventoryController and InventoryController.Equipped and InventoryController.Inventory
@@ -708,7 +708,7 @@ local function initFeatureShared()
 		if seeded then
 			break
 		end
-		task.wait(0.25)
+		task.wait(0.1)
 	end
 	refreshServerTruth()
 	FeatureSharedReady = true
