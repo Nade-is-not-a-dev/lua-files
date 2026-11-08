@@ -11,3 +11,4 @@ feature-shared.lua
 modules/ball-spoof.lua
 modules/score-fx.lua
 modules/auto-shiftlock.lua
+modules/equip-router.lua
