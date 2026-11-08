@@ -21,6 +21,9 @@ loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/lua-files/vl-suite.
   lewat suiteActivateFeature("Ball" / "Jersey" / ...), jadi
   alat bersama hanya menyentuh kategori yang aktif.
 - `ball-spoof.lua` — modul fitur pertama: spoof bola saja.
+- `auto-shiftlock.lua` — putar karakter menghadap kamera
+  saat lompat + Redirection/Boom Jump (dulu "Face Camera");
+  tidak menunggu feature-shared.
 
 Untuk sekarang (2026-11-08) hanya ball-spoof yang aktif di
 manifest; modul fitur lain (score-fx, settings, player-card,

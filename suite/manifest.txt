@@ -10,3 +10,4 @@
 core.lua
 feature-shared.lua
 ball-spoof.lua
+auto-shiftlock.lua
