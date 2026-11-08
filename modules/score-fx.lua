@@ -225,6 +225,12 @@ local function scrubFxPreviewLocks()
 		if not list then
 			return
 		end
+		-- Sapuan DIBAGI per bingkai: versi sinkron penuhnya
+		-- membekukan game beberapa detik (pohon daftar ini
+		-- besar) -- itulah freeze di tengah playback preview
+		-- yang dilaporkan user 2026-11-08 (awalan efek muncul,
+		-- freeze, lalu lanjut). 20 baris per napas.
+		local scrubbed = 0
 		for _, row in ipairs(list:GetDescendants()) do
 			if row:IsA("GuiObject") and isScoreFx(row.Name) then
 				local button = row:FindFirstChild("Button")
@@ -237,6 +243,10 @@ local function scrubFxPreviewLocks()
 					if img then
 						img.ImageColor3 = Color3.new(1, 1, 1)
 					end
+				end
+				scrubbed += 1
+				if scrubbed % 20 == 0 then
+					task.wait()
 				end
 			end
 		end
