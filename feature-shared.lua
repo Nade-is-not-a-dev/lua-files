@@ -175,26 +175,35 @@ if S.settings == nil then
 	S.settings = { WorldAffectingScoreFX = true }
 end
 
--- Segarkan kebenaran server dari DataService (bukan dari state UI).
-pcall(function()
-	local inv = DataService:Get("Inventory"):expect()
-	if type(inv) == "table" then
-		table.clear(S.realOwned)
-		for id, count in pairs(inv) do
-			if count and count > 0 then
-				S.realOwned[id] = true
+-- Segarkan kebenaran server dari DataService (bukan dari
+-- state UI): S.realOwned + S.serverEquipped +
+-- S.serverFavorited. Dulu blok ini duduk di top level
+-- file dan tidak pernah berhasil jalan -- DataService
+-- baru terisi di initFeatureShared, jadi pcall-nya
+-- selalu menelan error dan realOwned selalu kosong
+-- (carrier Score FX tidak pernah ketemu). Sekarang ia
+-- fungsi alat; init memanggilnya setelah seed selesai.
+local function refreshServerTruth()
+	pcall(function()
+		local inv = DataService:Get("Inventory"):expect()
+		if type(inv) == "table" then
+			table.clear(S.realOwned)
+			for id, count in pairs(inv) do
+				if count and count > 0 then
+					S.realOwned[id] = true
+				end
 			end
 		end
-	end
-	local eq = DataService:Get("Equipped"):expect()
-	if type(eq) == "table" then
-		S.serverEquipped = eq
-	end
-	local fav = DataService:Get("Favorited"):expect()
-	if type(fav) == "table" then
-		S.serverFavorited = fav
-	end
-end)
+		local eq = DataService:Get("Equipped"):expect()
+		if type(eq) == "table" then
+			S.serverEquipped = eq
+		end
+		local fav = DataService:Get("Favorited"):expect()
+		if type(fav) == "table" then
+			S.serverFavorited = fav
+		end
+	end)
+end
 
 ----------------------------------------------------------------
 -- Persistensi lokal
@@ -701,6 +710,7 @@ local function initFeatureShared()
 		end
 		task.wait(0.25)
 	end
+	refreshServerTruth()
 	FeatureSharedReady = true
 	print(("[VL Suite] feature-shared ready in %.2fs"):format(os.clock() - t0))
 	suiteModuleLoaded("feature-shared")

@@ -195,7 +195,7 @@ local function ensureFxCarrier()
 	end
 	local carrier = pickFxCarrier()
 	if not carrier then
-		warn("[VLBallSpoof] No owned Score FX available as carrier -- the spoof cannot trigger without one genuine effect owned.")
+		warn("[VL Suite] No owned Score FX available as carrier -- the spoof cannot trigger without one genuine effect owned.")
 		return
 	end
 	if not S.originalEquip then
