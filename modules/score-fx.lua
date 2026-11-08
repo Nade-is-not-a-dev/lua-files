@@ -323,7 +323,15 @@ local function initScoreFx()
 		ScoreEffectPreviewController.Open = function(self, id, ...)
 			injectInventory()
 			local result = originalFxPreviewOpen(self, id, ...)
-			task.delay(0.5, scrubFxPreviewLocks)
+			-- Scrub gembok TIDAK lagi dipanggil dari sini:
+			-- versi sinkronnya membekukan preview di tengah
+			-- efek, versi per-bingkainya (v0.13.2) malah
+			-- membuat preview patah-patah sejak awal --
+			-- keduanya dilaporkan user 2026-11-08. Playback
+			-- preview sekarang bersih; apakah gembok di
+			-- daftar preview muncul lagi tanpa scrub, dicek
+			-- dari laporan user (fungsi scrubFxPreviewLocks
+			-- dipertahankan untuk pemicu lain bila perlu).
 			return result
 		end
 	end
