@@ -413,6 +413,7 @@ local ALERT_FX_WORLD = "This score effect physically affects players. The spoof 
 	end
 
 FeatureAPI.scanWeldedBalls = scanWeldedBalls
+suiteActivateFeature("Ball")
 
 local function initBallSpoof()
 	local t0 = os.clock()
@@ -421,6 +422,13 @@ local function initBallSpoof()
 		return
 	end
 	local tShared = os.clock()
+	-- Pakai alat feature-shared sendiri: muat state lokal,
+	-- pasang pengawatan event bersama, suntikkan kategori
+	-- Ball saja ke inventory, terapkan lapisan equip bola.
+	loadLocal()
+	installSuiteWiring()
+	injectInventory()
+	applyEquipped()
 	if not S.installedBall then
 		S.installedBall = true
 	-- Ball.new: ganti model + Item dengan skin palsu saat spawn.

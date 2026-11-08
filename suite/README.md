@@ -13,9 +13,13 @@ loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/lua-files/vl-suite.
 
 - `core.lua` — inti bersama: game guard, state, helper,
   persistensi.
-- `feature-shared.lua` — infrastruktur fitur Bagian A:
-  akuisisi controller Knit, klasifikasi item, state spoof,
-  apply bersama, pengawatan event bersama.
+- `feature-shared.lua` — PENYEDIA ALAT bersama (Bagian A):
+  akuisisi controller Knit + seed, klasifikasi item, state
+  spoof, dan fungsi alat (installSuiteWiring, injectInventory,
+  applyEquipped, ...). Init-nya hanya menyiapkan alat; modul
+  fitur memakai alatnya sendiri dan mendaftarkan kategorinya
+  lewat suiteActivateFeature("Ball" / "Jersey" / ...), jadi
+  alat bersama hanya menyentuh kategori yang aktif.
 - `ball-spoof.lua` — modul fitur pertama: spoof bola saja.
 
 Untuk sekarang (2026-11-08) hanya ball-spoof yang aktif di

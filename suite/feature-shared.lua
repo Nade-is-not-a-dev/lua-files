@@ -8,9 +8,12 @@
 -- applyFavorites, injectInventory, dan pengawatan event
 -- bersama (ProfileUpdated, penjaga drift, InventoryChanged).
 --
--- Modul fitur (ball-spoof, score-fx, settings, player-card,
--- emote, jersey, equip-router) berjalan SETELAH file ini dan
--- memakai local-local di sini. Panggilan
+-- File ini hanya MENYEDIAKAN alat: init-nya cuma menyiapkan
+-- alat (akuisisi + seed) lalu selesai; perilaku (pengawatan
+-- event, injeksi, penerapan lapisan) dilakukan modul fitur
+-- memakai alatnya (installSuiteWiring, injectInventory,
+-- applyEquipped, ...). Modul fitur berjalan SETELAH file
+-- ini dan memakai local-local di sini. Panggilan
 -- balik ke modul fitur lewat FeatureAPI (diisi modul fitur)
 -- karena urutan deklarasi satu chunk.
 ----------------------------------------------------------------
@@ -22,6 +25,17 @@ local function awaitFeatureShared(timeout)
 		task.wait(0.1)
 	end
 	return FeatureSharedReady
+end
+
+-- Fitur yang AKTIF di build ini: modul fitur mendaftarkan
+-- dirinya di top level file-nya (suiteActivateFeature("Ball")
+-- dst, memakai nama tipe Content). Alat bersama di file ini
+-- (injectInventory, applyEquipped, applyFavorites) hanya
+-- menyentuh kategori yang aktif, jadi build satu fitur
+-- benar-benar berperilaku satu fitur.
+local SuiteActive = {}
+local function suiteActivateFeature(name)
+	SuiteActive[name] = true
 end
 
 -- Controller & service bersama: dinyatakan di sini (chunk),
@@ -215,7 +229,12 @@ local function saveLocal()
 	end)
 end
 
+local LocalStateLoaded = false
 local function loadLocal()
+	if LocalStateLoaded then
+		return
+	end
+	LocalStateLoaded = true
 	if not hasFS then
 		return
 	end
@@ -333,23 +352,25 @@ end
 
 local function applyEquipped()
 	local merged = table.clone(S.serverEquipped)
-	if S.fakeEquipped then
+	if SuiteActive.Ball and S.fakeEquipped then
 		merged.Ball = S.fakeEquipped
 	end
-	if S.fakeJersey then
+	if SuiteActive.Jersey and S.fakeJersey then
 		merged.Jersey = S.fakeJersey
 	end
-	if S.fakeCard then
+	if SuiteActive.PlayerCard and S.fakeCard then
 		merged.PlayerCard = S.fakeCard
 	end
-	if S.fakeScoreFx then
+	if SuiteActive.ScoreEffect and S.fakeScoreFx then
 		merged.ScoreEffect = S.fakeScoreFx
 	end
 	if not shallowSame(InventoryController.Equipped:get(), merged) then
 		InventoryController.Equipped:set(merged)
 	end
-	applyAssetPatch()
-	if FeatureAPI.scanWeldedBalls then FeatureAPI.scanWeldedBalls() end
+	if SuiteActive.Ball then
+		applyAssetPatch()
+		if FeatureAPI.scanWeldedBalls then FeatureAPI.scanWeldedBalls() end
+	end
 end
 
 -- Favorit yang dibaca UI (bintang di sel kartu + label tombol
@@ -362,11 +383,15 @@ local function applyFavorites()
 	end
 	pcall(function()
 		local merged = table.clone(S.serverFavorited)
-		for id in pairs(S.fakeCardFavorites) do
-			merged[id] = true
+		if SuiteActive.PlayerCard then
+			for id in pairs(S.fakeCardFavorites) do
+				merged[id] = true
+			end
 		end
-		for id in pairs(S.fakeFxFavorites) do
-			merged[id] = true
+		if SuiteActive.ScoreEffect then
+			for id in pairs(S.fakeFxFavorites) do
+				merged[id] = true
+			end
 		end
 		if not shallowSame(InventoryController.Favorited:get(), merged) then
 			InventoryController.Favorited:set(merged)
@@ -375,16 +400,22 @@ local function applyFavorites()
 end
 
 local function injectInventory()
-	-- Semua bola + jersey tampil di grid: buildEntries membaca
+	-- Item kategori AKTIF tampil di grid: buildEntries membaca
 	-- Inventory Value. MENAMBAH saja: clone dulu, isi kunci yang
 	-- belum ada. PENTING: Value hanya di-:set bila isinya BENAR-
 	-- BENAR berubah -- :set dengan tabel baru (walau isinya sama)
 	-- membuat Fusion membangun ulang semua halaman grid, sel-sel
 	-- VirtualGrid terikat ulang, dan ikon tampak "loading" lagi
 	-- setiap kali layar dibuka.
+	local activeLists = {}
+	if SuiteActive.Ball then table.insert(activeLists, ALL_BALL_IDS) end
+	if SuiteActive.Jersey then table.insert(activeLists, ALL_JERSEY_IDS) end
+	if SuiteActive.Emote then table.insert(activeLists, ALL_EMOTE_IDS) end
+	if SuiteActive.PlayerCard then table.insert(activeLists, ALL_CARD_IDS) end
+	if SuiteActive.ScoreEffect then table.insert(activeLists, ALL_FX_IDS) end
 	local merged = table.clone(InventoryController.Inventory:get() or {})
 	local changed = false
-	for _, list in ipairs({ ALL_BALL_IDS, ALL_JERSEY_IDS, ALL_EMOTE_IDS, ALL_CARD_IDS, ALL_FX_IDS }) do
+	for _, list in ipairs(activeLists) do
 		for _, id in ipairs(list) do
 			if not merged[id] or merged[id] <= 0 then
 				merged[id] = 1
@@ -399,7 +430,7 @@ local function injectInventory()
 	if InventoryController.ItemCount then
 		local counts = table.clone(InventoryController.ItemCount:get() or {})
 		local countsChanged = false
-		for _, list in ipairs({ ALL_BALL_IDS, ALL_JERSEY_IDS, ALL_EMOTE_IDS, ALL_CARD_IDS, ALL_FX_IDS }) do
+		for _, list in ipairs(activeLists) do
 			for _, id in ipairs(list) do
 				if not counts[id] then
 					counts[id] = 1
@@ -415,7 +446,7 @@ local function injectInventory()
 	-- JerseyPreviewController. Normalnya itu objek yang SAMA dengan
 	-- milik InventoryController; bila ternyata beda, suntik juga ke
 	-- sana supaya gembok "tidak dimiliki" di daftar preview hilang.
-	if JerseyPreviewController and JerseyPreviewController.Inventory
+	if SuiteActive.Jersey and JerseyPreviewController and JerseyPreviewController.Inventory
 		and JerseyPreviewController.Inventory ~= InventoryController.Inventory then
 		local pMerged = table.clone(JerseyPreviewController.Inventory:get() or {})
 		local pChanged = false
@@ -433,7 +464,7 @@ local function injectInventory()
 	-- Value Inventory milik ScoreEffectPreviewController (gembok
 	-- tampil bila id tidak ada di sana). Suntik juga bila objeknya
 	-- ternyata berbeda.
-	if ScoreEffectPreviewController and ScoreEffectPreviewController.Inventory
+	if SuiteActive.ScoreEffect and ScoreEffectPreviewController and ScoreEffectPreviewController.Inventory
 		and ScoreEffectPreviewController.Inventory ~= InventoryController.Inventory then
 		local fMerged = table.clone(ScoreEffectPreviewController.Inventory:get() or {})
 		local fChanged = false
@@ -500,62 +531,11 @@ local function resolvedPromise(...)
 	return p
 end
 
-local function initFeatureShared()
-	local t0 = os.clock()
-	-- Tunggu controller & service siap (KnitStart selesai). GetController
-	-- bisa error sebelum Knit hidup, jadi dibungkus pcall; timeout 90
-	-- detik agar bagian lain tidak ikut tertahan selamanya.
-	local deadline = os.clock() + 90
-	repeat
-		pcall(function()
-			InventoryController = Knit.GetController("InventoryController")
-			InventoryService = Knit.GetService("InventoryService")
-			DataService = Knit.GetService("DataService")
-			CountService = Knit.GetService("CountService")
-			JerseyService = Knit.GetService("JerseyService")
-			JerseyPreviewController = Knit.GetController("JerseyPreviewController")
-			EmoteController = Knit.GetController("EmoteController")
-			PromptController = Knit.GetController("PromptController")
-			AnimationController = Knit.GetController("AnimationController")
-			PlayerCardController = Knit.GetController("PlayerCardController")
-			PlayerCardService = Knit.GetService("PlayerCardService")
-			SettingsService = Knit.GetService("SettingsService")
-			SettingsController = Knit.GetController("SettingsController")
-			InterfaceController = Knit.GetController("InterfaceController")
-			EffectController = Knit.GetController("EffectController")
-			ScoreEffectPreviewController = Knit.GetController("ScoreEffectPreviewController")
-		end)
-		task.wait(0.25)
-	until (InventoryController and InventoryController.Equipped and InventoryController.Inventory
-		and InventoryService and DataService) or os.clock() > deadline
-	if not (InventoryController and InventoryController.Equipped and InventoryController.Inventory
-		and InventoryService and DataService) then
-		warn("[VLBallSpoof] Controllers/services not ready after 90 seconds; ball spoof part skipped.")
-		return
-	end
-	-- Tunggu state awal dari server benar-benar ter-seed ke controller.
-	-- Field controller terisi satu-satu secara async (Favorited bisa
-	-- masih nil saat Equipped/Inventory sudah ada), jadi ceknya wajib
-	-- nil-safe -- versi sebelumnya crash di sini ("index nil 'get'").
-	local function valueIsTable(v)
-		if v == nil then
-			return false
-		end
-		local ok, val = pcall(function()
-			return v:get()
-		end)
-		return ok and typeof(val) == "table"
-	end
-	local seedDeadline = os.clock() + 30
-	while os.clock() < seedDeadline do
-		local seeded = valueIsTable(InventoryController.Equipped)
-			and valueIsTable(InventoryController.Inventory)
-			and valueIsTable(InventoryController.Favorited)
-		if seeded then
-			break
-		end
-		task.wait(0.25)
-	end
+-- Pengawatan event bersama: alat yang DISEDIAKAN file ini,
+-- dipasang oleh modul fitur dari init-nya (guard di dalamnya
+-- membuatnya terpasang sekali saja walau dipanggil banyak
+-- modul). Dulu dipasang langsung oleh initFeatureShared.
+local function installSuiteWiring()
 	if not S.installedShared then
 		S.installedShared = true
 	-- Ikuti perubahan server: terapkan ulang lapisan lokal di atasnya.
@@ -663,10 +643,64 @@ local function initFeatureShared()
 		end)
 	end
 	end
-	loadLocal()
-	injectInventory()
-	applyEquipped()
-	applyFavorites()
+end
+
+local function initFeatureShared()
+	local t0 = os.clock()
+	-- Tunggu controller & service siap (KnitStart selesai). GetController
+	-- bisa error sebelum Knit hidup, jadi dibungkus pcall; timeout 90
+	-- detik agar bagian lain tidak ikut tertahan selamanya.
+	local deadline = os.clock() + 90
+	repeat
+		pcall(function()
+			InventoryController = Knit.GetController("InventoryController")
+			InventoryService = Knit.GetService("InventoryService")
+			DataService = Knit.GetService("DataService")
+			CountService = Knit.GetService("CountService")
+			JerseyService = Knit.GetService("JerseyService")
+			JerseyPreviewController = Knit.GetController("JerseyPreviewController")
+			EmoteController = Knit.GetController("EmoteController")
+			PromptController = Knit.GetController("PromptController")
+			AnimationController = Knit.GetController("AnimationController")
+			PlayerCardController = Knit.GetController("PlayerCardController")
+			PlayerCardService = Knit.GetService("PlayerCardService")
+			SettingsService = Knit.GetService("SettingsService")
+			SettingsController = Knit.GetController("SettingsController")
+			InterfaceController = Knit.GetController("InterfaceController")
+			EffectController = Knit.GetController("EffectController")
+			ScoreEffectPreviewController = Knit.GetController("ScoreEffectPreviewController")
+		end)
+		task.wait(0.25)
+	until (InventoryController and InventoryController.Equipped and InventoryController.Inventory
+		and InventoryService and DataService) or os.clock() > deadline
+	if not (InventoryController and InventoryController.Equipped and InventoryController.Inventory
+		and InventoryService and DataService) then
+		warn("[VLBallSpoof] Controllers/services not ready after 90 seconds; ball spoof part skipped.")
+		return
+	end
+	-- Tunggu state awal dari server benar-benar ter-seed ke controller.
+	-- Field controller terisi satu-satu secara async (Favorited bisa
+	-- masih nil saat Equipped/Inventory sudah ada), jadi ceknya wajib
+	-- nil-safe -- versi sebelumnya crash di sini ("index nil 'get'").
+	local function valueIsTable(v)
+		if v == nil then
+			return false
+		end
+		local ok, val = pcall(function()
+			return v:get()
+		end)
+		return ok and typeof(val) == "table"
+	end
+	local seedDeadline = os.clock() + 30
+	while os.clock() < seedDeadline do
+		local seeded = valueIsTable(InventoryController.Equipped)
+			and valueIsTable(InventoryController.Inventory)
+			and valueIsTable(InventoryController.Favorited)
+		if seeded then
+			break
+		end
+		task.wait(0.25)
+	end
 	FeatureSharedReady = true
 	print(("[VL Suite] feature-shared ready in %.2fs"):format(os.clock() - t0))
 	suiteModuleLoaded("feature-shared")
