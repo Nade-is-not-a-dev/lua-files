@@ -31,6 +31,9 @@
 
 local M = {}
 
+local UI_VERSION = "1.3"
+M.VERSION = UI_VERSION
+
 local DARK = Color3.fromRGB(35, 37, 39)
 local CELL = Color3.fromRGB(52, 54, 56)
 local BTN = Color3.fromRGB(90, 93, 97)
@@ -73,6 +76,12 @@ function M.Build(deps)
 	holder.Visible = false
 	holder.ZIndex = 2
 	holder.Parent = gui
+
+	local versionLabel = label(holder, "Avatar Lite UI v" .. UI_VERSION, 11, true, GREY)
+	versionLabel.Size = UDim2.fromScale(0.25, 0.03)
+	versionLabel.Position = UDim2.fromScale(0.008, 0.006)
+	versionLabel.TextXAlignment = Enum.TextXAlignment.Left
+	versionLabel.ZIndex = 300
 
 	------------------------------------------------------------
 	-- Kolom kiri: AvatarPreview + EquippedItems
@@ -258,6 +267,29 @@ function M.Build(deps)
 	local exitRatio = Instance.new("UIAspectRatioConstraint")
 	exitRatio.AspectRatio = 1
 	exitRatio.Parent = exitBtn
+
+	local exitFallback = Instance.new("TextButton")
+	exitFallback.Name = "ExitFallback"
+	exitFallback.Size = UDim2.fromScale(0.035, 0.035)
+	exitFallback.Position = UDim2.fromScale(0.98, 0.03)
+	exitFallback.AnchorPoint = Vector2.new(1, 0)
+	exitFallback.BackgroundTransparency = 1
+	exitFallback.TextColor3 = WHITE
+	exitFallback.Font = Enum.Font.GothamBold
+	exitFallback.TextSize = 16
+	exitFallback.Text = "X"
+	exitFallback.Visible = false
+	exitFallback.ZIndex = 202
+	exitFallback.Parent = catalog
+	local exitFallbackRatio = Instance.new("UIAspectRatioConstraint")
+	exitFallbackRatio.AspectRatio = 1
+	exitFallbackRatio.Parent = exitFallback
+	task.delay(3, function()
+		if not exitBtn.IsLoaded then
+			exitBtn.Visible = false
+			exitFallback.Visible = true
+		end
+	end)
 
 	-- Baris kategori (tab) di atas, gaya Categories CAC.
 	local tabsBar = Instance.new("Frame")
@@ -746,9 +778,11 @@ function M.Build(deps)
 		return holder.Visible
 	end
 	exitBtn.Activated:Connect(api.Hide)
+	exitFallback.Activated:Connect(api.Hide)
 
 	showTab("Wearing")
 	api.Refresh()
+	print("[VLAvatar] UI v" .. UI_VERSION .. " loaded")
 	return api
 end
 
