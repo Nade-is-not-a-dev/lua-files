@@ -321,7 +321,13 @@ local function initScoreFx()
 	if S.fakeScoreFx then
 		task.defer(ensureFxCarrier)
 	end
-	task.delay(3, scrubFxPreviewLocks)
+	-- DULU di sini ada task.delay(3, scrubFxPreviewLocks):
+	-- scrub itu menyapu seluruh pohon daftar EffectPreview
+	-- secara sinkron ~3 detik setelah load dan diduga kuat
+	-- penyebab freeze ~5 detik setelah suite selesai dimuat
+	-- (dilaporkan user 2026-11-08). Dihapus: membuka layar
+	-- preview sendiri sudah memicu scrub yang sama lewat
+	-- bungkus Open di atas, jadi scrub terjadwal ini mubazir.
 	print(("[VL Suite] score-fx ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, tShared - t0))
 	suiteModuleLoaded("score-fx")
 end
