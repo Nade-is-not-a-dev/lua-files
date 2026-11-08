@@ -1,15 +1,12 @@
 # Urutan penggabungan VL Suite (satu file per baris, path relatif
 # terhadap folder suite/). Baris diawali # diabaikan.
-# Urutan penting: core -> feature-shared -> modul fitur
-# (equip-router terakhir: menyebut fungsi semua modul fitur).
-# Untuk memburu lag awal: nonaktifkan modul dengan memberi #
-# di depan namanya, push, lalu jalankan ulang loadstring.
+# Urutan penting: core -> feature-shared -> modul fitur.
+#
+# SEMENTARA (2026-11-08, permintaan user): hanya ball-spoof
+# yang aktif. Modul fitur lain (score-fx, settings,
+# player-card, emote, jersey, equip-router) dihapus dari repo
+# untuk sekarang; sumbernya tersimpan di riwayat git v0.5.1
+# dan bisa dikembalikan satu per satu.
 core.lua
 feature-shared.lua
 ball-spoof.lua
-score-fx.lua
-settings.lua
-player-card.lua
-emote.lua
-jersey.lua
-equip-router.lua

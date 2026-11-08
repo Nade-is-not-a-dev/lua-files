@@ -17,15 +17,12 @@ loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/lua-files/vl-suite.
   akuisisi controller Knit, klasifikasi item, state spoof,
   apply bersama, pengawatan event bersama.
 - `ball-spoof.lua` — modul fitur pertama: spoof bola saja.
-- `score-fx.lua` — Score FX spoof + pembawa + bungkus
-  PlayScoreEffect.
-- `settings.lua` — grup VL Settings + bungkus ChangeSetting
-  + baris Settings Avatar Lite.
-- `player-card.lua` — kartu pemain spoof + favorit kartu.
-- `emote.lua` — emote spoof + prop lokal.
-- `jersey.lua` — jersey spoof + bungkus preview.
-- `equip-router.lua` — intersepsi InventoryService:Equip
-  (paling akhir: menyebut fungsi semua modul fitur).
+
+Untuk sekarang (2026-11-08) hanya ball-spoof yang aktif di
+manifest; modul fitur lain (score-fx, settings, player-card,
+emote, jersey, equip-router) dihapus sementara dari repo —
+sumbernya tersimpan di riwayat git v0.5.1 dan dikembalikan
+satu per satu.
 Setiap init modul mencetak baris timing "ready in ...s"
 untuk memburu sumber lag di awal jalan.
 - Modul fitur (menyusul): satu file per fitur di folder ini,
