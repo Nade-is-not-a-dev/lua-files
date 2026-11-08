@@ -28,6 +28,9 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `modules/score-fx.lua` — modul fitur: spoof Score FX
   (resolver efek palsu / Random Favorites, carrier, suara
   poin, bungkus PlayScoreEffect, scrub gembok preview).
+- `modules/player-card.lua` — modul fitur: spoof kartu
+  pemain (resolver kartu tampil + bungkus ToggleFavorite
+  untuk favorit kartu/Score FX palsu + DisplayFlashCard).
 - `modules/equip-router.lua` — intersepsi
   InventoryService:Equip: klik equip item palsu dirutekan
   ke lapis lokal, item asli diteruskan ke server. Paling
@@ -41,8 +44,8 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `VERSION` — versi suite (naikkan saat rilis berarti).
 - `build.py` — penggabung; berjalan lokal maupun di Actions.
 
-Modul fitur lain (settings, player-card, emote, jersey)
-sedang dihapus sementara dari repo —
+Modul fitur lain (settings, emote, jersey) sedang
+dihapus sementara dari repo —
 sumbernya tersimpan di riwayat git v0.5.1 dan dikembalikan
 satu per satu.
 
