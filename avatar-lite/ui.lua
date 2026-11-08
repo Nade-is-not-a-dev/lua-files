@@ -31,7 +31,7 @@
 
 local M = {}
 
-local UI_VERSION = "1.5"
+local UI_VERSION = "1.6"
 M.VERSION = UI_VERSION
 
 local DARK = Color3.fromRGB(35, 37, 39)
@@ -380,7 +380,8 @@ function M.Build(deps)
 	local function mkItemCell(parent, entry, primaryText, primaryColor, onPrimary)
 		-- entry: {id, name, tag}
 		local cellBtn = Instance.new("ImageButton")
-		cellBtn.BackgroundTransparency = 1
+		cellBtn.BackgroundColor3 = CELL
+		cellBtn.BackgroundTransparency = 0
 		cellBtn.Image = ""
 		cellBtn.ZIndex = 3
 		cellBtn.Parent = parent
@@ -774,6 +775,7 @@ function M.Build(deps)
 	catScroll.Position = UDim2.fromOffset(10, 102)
 	catScroll.BackgroundTransparency = 1
 	catScroll.ScrollBarThickness = 4
+	catScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	catScroll.ClipsDescendants = true
 	catScroll.ZIndex = 3
 	catScroll.Parent = catPage
@@ -816,12 +818,13 @@ function M.Build(deps)
 			category = catState.category,
 			subcategory = catState.subcategory,
 			cursor = append and catState.cursor or nil,
-		}, function(items, nextCursor, err)
+		}, function(items, nextCursor, err, rawCount)
 			catState.busy = false
 			if err then
 				catStatus("Catalog: " .. err)
 				return
 			end
+			print(("[VLAvatar] catalog render: %d items (raw %s), cursor=%s"):format(#items, tostring(rawCount), tostring(nextCursor ~= nil)))
 			if not append then
 				for _, ch in ipairs(catScroll:GetChildren()) do
 					if ch:IsA("ImageButton") then
@@ -846,6 +849,8 @@ function M.Build(deps)
 			moreBtn.Visible = nextCursor ~= nil
 			if append then
 				catStatus(("Catalog: %d more items loaded."):format(n))
+			elseif n == 0 then
+				catStatus(("Catalog: 0 shown (raw %s from API). Tell Muse this number."):format(tostring(rawCount)))
 			else
 				catStatus(("Catalog: %d items found. Tap one, then WEAR."):format(n))
 			end
