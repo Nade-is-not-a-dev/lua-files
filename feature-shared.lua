@@ -1,5 +1,5 @@
 ----------------------------------------------------------------
--- suite/feature-shared.lua -- infrastruktur bersama fitur
+-- feature-shared.lua -- infrastruktur bersama fitur
 -- (dulu: kerangka initBallSpoof di vl-ball-spoof.lua monolit)
 --
 -- Berisi: akuisisi controller/service Knit + tunggu seed

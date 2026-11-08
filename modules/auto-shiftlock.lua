@@ -1,5 +1,5 @@
 ----------------------------------------------------------------
--- suite/auto-shiftlock.lua -- Modul fitur: Auto Shiftlock
+-- modules/auto-shiftlock.lua -- Modul fitur: Auto Shiftlock
 --
 -- Dulu bernama "Face Camera" (Bagian B monolit): karakter
 -- diputar SEKALI menghadap arah kamera pada dua momen --

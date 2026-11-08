@@ -1,0 +1,12 @@
+# Urutan penggabungan VL Suite (satu file per baris, path relatif
+# terhadap root repo). Baris diawali # diabaikan.
+# Urutan penting: inti (core -> feature-shared) -> modul fitur.
+#
+# Modul fitur lain (score-fx, settings, player-card, emote,
+# jersey, equip-router) sedang dihapus sementara dari repo
+# (2026-11-08); sumbernya tersimpan di riwayat git v0.5.1 dan
+# dikembalikan satu per satu ke folder modules/.
+core.lua
+feature-shared.lua
+modules/ball-spoof.lua
+modules/auto-shiftlock.lua

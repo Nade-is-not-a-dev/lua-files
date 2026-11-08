@@ -3,7 +3,7 @@
 into one distributable file, dist/vl-suite.lua, with a version
 stamp header. Runs identically locally and in GitHub Actions.
 
-Usage: python3 suite/build.py
+Usage: python3 build.py
 Env:   GITHUB_SHA (optional) -- commit stamped into the header.
 """
 import os
@@ -11,8 +11,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SUITE = os.path.join(ROOT, "suite")
+ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(ROOT, "dist")
 OUT_FILE = os.path.join(OUT_DIR, "vl-suite.lua")
 LOADSTRING_URL = "https://nade-is-not-a-dev.github.io/vl-suite/vl-suite.lua"
@@ -36,9 +35,9 @@ def commit_sha():
 
 
 def main():
-    version = read(os.path.join(SUITE, "VERSION")).strip()
+    version = read(os.path.join(ROOT, "VERSION")).strip()
     manifest = []
-    for line in read(os.path.join(SUITE, "manifest.txt")).splitlines():
+    for line in read(os.path.join(ROOT, "manifest.txt")).splitlines():
         line = line.strip()
         if line and not line.startswith("#"):
             manifest.append(line)
@@ -56,7 +55,7 @@ def main():
         f"--  built   : {built} (GitHub Actions)\n"
         f"--  loadstring:\n"
         f'--    loadstring(game:HttpGet("{LOADSTRING_URL}"))()\n'
-        "--  File ini HASIL BUILD dari modul-modul di folder suite/.\n"
+        "--  File ini HASIL BUILD: inti di root repo, modul fitur di modules/.\n"
         "--  Jangan edit langsung -- edit modulnya, lalu push.\n"
         "-- ============================================================\n"
         f'print("[VL Suite] v{version} @ {sha[:7]} -- loading {len(manifest)} module(s)...")\n\n'
@@ -65,14 +64,14 @@ def main():
     parts = [header]
     total = 0
     for entry in manifest:
-        path = os.path.join(SUITE, entry)
+        path = os.path.join(ROOT, entry)
         if not os.path.isfile(path):
             print(f"missing module: {entry}", file=sys.stderr)
             return 1
         src = read(path).rstrip() + "\n"
         total += len(src)
         parts.append(
-            f"\n-- ===== module: suite/{entry} =====\n" + src
+            f"\n-- ===== module: {entry} =====\n" + src
         )
 
     parts.append(

@@ -3,7 +3,12 @@ name: Build VL Suite
 on:
   push:
     paths:
-      - "suite/**"
+      - "core.lua"
+      - "feature-shared.lua"
+      - "modules/**"
+      - "build.py"
+      - "manifest.txt"
+      - "VERSION"
       - ".github/workflows/build-suite.yml"
   workflow_dispatch:
 
@@ -27,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build combined file
-        run: python3 suite/build.py
+        run: python3 build.py
 
       - name: Syntax check (luau-compile)
         run: |

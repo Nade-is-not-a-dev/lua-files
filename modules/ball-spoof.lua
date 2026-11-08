@@ -1,5 +1,5 @@
 ----------------------------------------------------------------
--- suite/ball-spoof.lua -- Modul fitur: Ball Spoof SAJA
+-- modules/ball-spoof.lua -- Modul fitur: Ball Spoof SAJA
 --
 -- Isi: mesin bola weld (spoofWelded dkk), kepemilikan serve
 -- (recordServe / replayBelongsToMe), sintesis SurfaceHit,

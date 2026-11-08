@@ -1,8 +1,9 @@
-# vl-suite
+# VL Suite
 
-Modular client-side spoof suite for **Volleyball Legends** (Roblox),
-built from separate feature modules that are concatenated into one
-script and published via GitHub Pages.
+Modular client-side spoof suite for **Volleyball Legends** (Roblox).
+Feature modules are concatenated into one script and published via
+GitHub Pages. Everything is client-side only: effects are visible on
+your own screen, nothing is sent to the server.
 
 Loadstring:
 
@@ -12,12 +13,48 @@ loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/vl-suite/vl-suite.l
 
 ## Layout
 
-- `suite/` — the modules and the build script (`build.py`
-  concatenates the files listed in `suite/manifest.txt`, stamps
-  the version from `suite/VERSION`, and writes `dist/vl-suite.lua`).
-  See `suite/README.md` for the module list and conventions.
-- `.github/workflows/build-suite.yml` — on every push to `suite/**`:
-  build, syntax-check with luau-compile, deploy to GitHub Pages.
+Inti suite di root repo, modul fitur di `modules/`:
 
-Everything is client-side only: effects are visible on your own
-screen, nothing is sent to the server.
+- `core.lua` — inti bersama: game guard, state, helper,
+  persistensi, dan pelacak READY.
+- `feature-shared.lua` — PENYEDIA ALAT bersama: akuisisi
+  controller Knit + seed profil, klasifikasi item, state spoof,
+  dan fungsi alat (installSuiteWiring, injectInventory,
+  applyEquipped, ...). Init-nya hanya menyiapkan alat; modul
+  fitur memakai alatnya sendiri dan mendaftarkan kategorinya
+  lewat suiteActivateFeature("Ball" / "Jersey" / ...), jadi
+  alat bersama hanya menyentuh kategori yang aktif.
+- `modules/ball-spoof.lua` — modul fitur: spoof bola.
+- `modules/auto-shiftlock.lua` — putar karakter menghadap
+  kamera saat lompat + Redirection/Boom Jump (dulu
+  "Face Camera"); tidak menunggu feature-shared.
+- `manifest.txt` — urutan penggabungan (inti dulu, lalu modul
+  fitur sesuai urutan jalan).
+- `VERSION` — versi suite (naikkan saat rilis berarti).
+- `build.py` — penggabung; berjalan lokal maupun di Actions.
+
+Modul fitur lain (score-fx, settings, player-card, emote,
+jersey, equip-router) sedang dihapus sementara dari repo —
+sumbernya tersimpan di riwayat git v0.5.1 dan dikembalikan
+satu per satu.
+
+## Alur
+
+Push yang menyentuh inti/modul -> workflow build -> cek
+sintaks luau -> terbit ke GitHub Pages (`dist/vl-suite.lua`).
+Header file hasil build memuat versi + commit + tanggal, dan
+tercetak ke konsol saat script jalan, jadi versi yang aktif
+selalu bisa diverifikasi.
+
+## Konvensi
+
+- Baris `READY` dicetak real time oleh pelacak di `core.lua`:
+  hanya setelah semua modul terdaftar benar-benar selesai
+  init, jadi selalu jadi baris terakhir di console. Modul
+  baru: panggil `suiteExpectModule("nama")` di top level file
+  dan `suiteModuleLoaded("nama")` di akhir init-nya.
+- Setiap init modul mencetak baris timing "ready in ...s"
+  untuk memburu sumber lag di awal jalan.
+- Console hanya memuat log [VL Suite]: modul tidak mencetak
+  log bermerek sendiri; warn kegagalan pun memakai awalan
+  [VL Suite].
