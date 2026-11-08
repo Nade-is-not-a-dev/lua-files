@@ -1,0 +1,4 @@
+# Urutan penggabungan VL Suite (satu file per baris, path relatif
+# terhadap folder suite/). Baris diawali # diabaikan.
+# Modul fitur ditambahkan di bawah core.lua sesuai urutan jalan.
+core.lua

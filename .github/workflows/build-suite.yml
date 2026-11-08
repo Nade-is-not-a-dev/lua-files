@@ -1,0 +1,46 @@
+name: Build VL Suite
+
+on:
+  push:
+    paths:
+      - "suite/**"
+      - ".github/workflows/build-suite.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build combined file
+        run: python3 suite/build.py
+
+      - name: Syntax check (luau-compile)
+        run: |
+          curl -sSL -o /tmp/luau.zip https://github.com/luau-lang/luau/releases/download/0.746/luau-ubuntu.zip
+          unzip -o /tmp/luau.zip -d /tmp/luau
+          /tmp/luau/luau-compile dist/vl-suite.lua > /dev/null
+          echo "luau-compile OK"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
