@@ -31,7 +31,7 @@
 
 local M = {}
 
-local UI_VERSION = "1.3"
+local UI_VERSION = "1.4"
 M.VERSION = UI_VERSION
 
 local DARK = Color3.fromRGB(35, 37, 39)
@@ -375,10 +375,244 @@ function M.Build(deps)
 		return page
 	end
 
+
+	------------------------------------------------------------
+	-- Tab Catalog: jelajah + cari katalog asli Roblox lewat API
+	-- resmi (data dari host: deps.queryCatalog). Ketuk sel, lalu
+	-- WEAR untuk memakai -- tanpa mengetik ID.
+	------------------------------------------------------------
+	local CAT_CHIPS = {
+		{ label = "All" },
+		{ label = "Accessories", category = "Accessories" },
+		{ label = "Head", category = "Accessories", subcategory = "Head" },
+		{ label = "Hair", category = "Accessories", subcategory = "Hair" },
+		{ label = "Face Acc.", category = "Accessories", subcategory = "Face" },
+		{ label = "Back", category = "Accessories", subcategory = "Back" },
+		{ label = "Clothing", category = "Clothing" },
+		{ label = "Faces", category = "Faces" },
+	}
+	local TYPE_TAGS = {
+		[2] = "T-SHIRT", [8] = "HAT", [11] = "SHIRT", [12] = "PANTS", [18] = "FACE",
+		[41] = "HAIR", [42] = "FACE ACC", [43] = "NECK", [44] = "SHOULDER",
+		[45] = "FRONT", [46] = "BACK", [47] = "WAIST",
+		[64] = "LAYERED", [65] = "LAYERED", [66] = "LAYERED", [67] = "LAYERED", [68] = "LAYERED",
+	}
+
+	local catButton = Instance.new("TextButton")
+	catButton.Name = "Tab_Catalog"
+	catButton.Size = UDim2.new(0, 0, 1, 0)
+	catButton.AutomaticSize = Enum.AutomaticSize.X
+	catButton.BackgroundColor3 = CELL
+	catButton.TextColor3 = WHITE
+	catButton.Font = Enum.Font.GothamBold
+	catButton.TextSize = 14
+	catButton.Text = "  Catalog  "
+	catButton.LayoutOrder = 1
+	catButton.ZIndex = 10
+	catButton.Parent = tabsBar
+	corner(catButton, 8)
+	tabButtons["Catalog"] = catButton
+	catButton.Activated:Connect(function()
+		showTab("Catalog")
+	end)
+
+	local catPage = Instance.new("Frame")
+	catPage.Name = "Page_Catalog"
+	catPage.Size = UDim2.fromScale(1, 0.8)
+	catPage.Position = UDim2.fromScale(0.5, 0.915)
+	catPage.AnchorPoint = Vector2.new(0.5, 1)
+	catPage.BackgroundTransparency = 1
+	catPage.ClipsDescendants = true
+	catPage.Visible = false
+	catPage.ZIndex = 3
+	catPage.Parent = catalog
+	pages["Catalog"] = catPage
+
+	local searchRow = Instance.new("Frame")
+	searchRow.Size = UDim2.new(1, -20, 0, 40)
+	searchRow.Position = UDim2.fromOffset(10, 8)
+	searchRow.BackgroundTransparency = 1
+	searchRow.ZIndex = 3
+	searchRow.Parent = catPage
+	local searchBox = Instance.new("TextBox")
+	searchBox.Size = UDim2.new(0.8, -6, 1, 0)
+	searchBox.BackgroundColor3 = CELL
+	searchBox.TextColor3 = WHITE
+	searchBox.PlaceholderColor3 = GREY
+	searchBox.PlaceholderText = "Search the catalog..."
+	searchBox.Font = Enum.Font.Gotham
+	searchBox.TextSize = 13
+	searchBox.Text = ""
+	searchBox.ClearTextOnFocus = false
+	searchBox.ZIndex = 3
+	searchBox.Parent = searchRow
+	corner(searchBox, 8)
+	local searchBtn = Instance.new("TextButton")
+	searchBtn.Size = UDim2.new(0.2, 0, 1, 0)
+	searchBtn.Position = UDim2.fromScale(0.8, 0)
+	searchBtn.BackgroundColor3 = GREEN
+	searchBtn.TextColor3 = DARK
+	searchBtn.Font = Enum.Font.GothamBold
+	searchBtn.TextSize = 13
+	searchBtn.Text = "SEARCH"
+	searchBtn.ZIndex = 3
+	searchBtn.Parent = searchRow
+	corner(searchBtn, 8)
+
+	local chipsScroll = Instance.new("ScrollingFrame")
+	chipsScroll.Size = UDim2.new(1, -20, 0, 38)
+	chipsScroll.Position = UDim2.fromOffset(10, 56)
+	chipsScroll.BackgroundTransparency = 1
+	chipsScroll.ScrollBarThickness = 3
+	chipsScroll.ScrollingDirection = Enum.ScrollingDirection.X
+	chipsScroll.ZIndex = 3
+	chipsScroll.Parent = catPage
+	local chipsLayout = Instance.new("UIListLayout")
+	chipsLayout.FillDirection = Enum.FillDirection.Horizontal
+	chipsLayout.Padding = UDim.new(0, 6)
+	chipsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	chipsLayout.Parent = chipsScroll
+	chipsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		chipsScroll.CanvasSize = UDim2.new(0, chipsLayout.AbsoluteContentSize.X + 12, 0, 0)
+	end)
+
+	local catScroll = Instance.new("ScrollingFrame")
+	catScroll.Size = UDim2.new(1, -20, 1, -152)
+	catScroll.Position = UDim2.fromOffset(10, 102)
+	catScroll.BackgroundTransparency = 1
+	catScroll.ScrollBarThickness = 4
+	catScroll.ClipsDescendants = true
+	catScroll.ZIndex = 3
+	catScroll.Parent = catPage
+	local catGrid = Instance.new("UIGridLayout")
+	catGrid.CellSize = UDim2.new(0.185, 0, 0.44, 0)
+	catGrid.CellPadding = UDim2.new(0.012, 0, 0.03, 0)
+	catGrid.SortOrder = Enum.SortOrder.LayoutOrder
+	catGrid.Parent = catScroll
+	catGrid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		catScroll.CanvasSize = UDim2.new(0, 0, 0, catGrid.AbsoluteContentSize.Y + 20)
+	end)
+
+	local moreBtn = Instance.new("TextButton")
+	moreBtn.Size = UDim2.new(0.3, 0, 0, 36)
+	moreBtn.Position = UDim2.new(0.5, 0, 1, -44)
+	moreBtn.AnchorPoint = Vector2.new(0.5, 0)
+	moreBtn.BackgroundColor3 = CELL
+	moreBtn.TextColor3 = WHITE
+	moreBtn.Font = Enum.Font.GothamBold
+	moreBtn.TextSize = 13
+	moreBtn.Text = "LOAD MORE"
+	moreBtn.Visible = false
+	moreBtn.ZIndex = 3
+	moreBtn.Parent = catPage
+	corner(moreBtn, 8)
+
+	local catState = { keyword = "", category = nil, subcategory = nil, cursor = nil, busy = false, loaded = false }
+	local function catStatus(text)
+		statusText.Text = text
+	end
+	local chipButtons = {}
+	local function runCatalog(append)
+		if catState.busy or not deps.queryCatalog then
+			return
+		end
+		catState.busy = true
+		catStatus("Loading catalog...")
+		deps.queryCatalog({
+			keyword = catState.keyword,
+			category = catState.category,
+			subcategory = catState.subcategory,
+			cursor = append and catState.cursor or nil,
+		}, function(items, nextCursor, err)
+			catState.busy = false
+			if err then
+				catStatus("Catalog: " .. err)
+				return
+			end
+			if not append then
+				for _, ch in ipairs(catScroll:GetChildren()) do
+					if ch:IsA("ImageButton") then
+						ch:Destroy()
+					end
+				end
+			end
+			local n = 0
+			for _, it in ipairs(items) do
+				n += 1
+				local captured = it
+				mkItemCell(catScroll, {
+					id = it.id,
+					name = it.name,
+					tag = TYPE_TAGS[it.assetType] or "ITEM",
+				}, "WEAR", GREEN, function()
+					deps.onWearId(tostring(captured.id))
+				end)
+			end
+			catState.cursor = nextCursor
+			catState.loaded = true
+			moreBtn.Visible = nextCursor ~= nil
+			if append then
+				catStatus(("Catalog: %d more items loaded."):format(n))
+			else
+				catStatus(("Catalog: %d items found. Tap one, then WEAR."):format(n))
+			end
+		end)
+	end
+	local function refreshChipsUI()
+		for i, btn in ipairs(chipButtons) do
+			local chip = CAT_CHIPS[i]
+			local active = (catState.category == chip.category) and (catState.subcategory == chip.subcategory)
+			btn.BackgroundColor3 = active and SLATE or CELL
+		end
+	end
+	for i, chip in ipairs(CAT_CHIPS) do
+		local b = Instance.new("TextButton")
+		b.Size = UDim2.new(0, 0, 1, 0)
+		b.AutomaticSize = Enum.AutomaticSize.X
+		b.BackgroundColor3 = CELL
+		b.TextColor3 = WHITE
+		b.Font = Enum.Font.GothamBold
+		b.TextSize = 12
+		b.Text = "  " .. chip.label .. "  "
+		b.LayoutOrder = i
+		b.ZIndex = 3
+		b.Parent = chipsScroll
+		corner(b, 8)
+		chipButtons[i] = b
+		local captured = chip
+		b.Activated:Connect(function()
+			catState.category = captured.category
+			catState.subcategory = captured.subcategory
+			catState.cursor = nil
+			refreshChipsUI()
+			runCatalog(false)
+		end)
+	end
+	refreshChipsUI()
+	local function submitSearch()
+		catState.keyword = searchBox.Text
+		catState.cursor = nil
+		runCatalog(false)
+	end
+	searchBtn.Activated:Connect(submitSearch)
+	searchBox.FocusLost:Connect(function(enterPressed)
+		if enterPressed then
+			submitSearch()
+		end
+	end)
+	moreBtn.Activated:Connect(function()
+		runCatalog(true)
+	end)
+	local function ensureCatalogLoaded()
+		if not catState.loaded and not catState.busy then
+			runCatalog(false)
+		end
+	end
+
 	------------------------------------------------------------
 	-- Tab Wearing: grid item terpasang (sel gaya katalog CAC)
 	------------------------------------------------------------
-	local wearingPage = mkTab("Wearing", 1)
+	local wearingPage = mkTab("Wearing", 2)
 	local wearGrid = Instance.new("UIGridLayout")
 	wearGrid.CellSize = UDim2.new(0.185, 0, 0.44, 0)
 	wearGrid.CellPadding = UDim2.new(0.012, 0, 0.03, 0)
@@ -393,13 +627,13 @@ function M.Build(deps)
 	end)
 
 	local openOverlay = nil
-	local function mkWearingCell(entry)
-		-- entry: {id, name, tag, onRemove}
+	local function mkItemCell(parent, entry, primaryText, primaryColor, onPrimary)
+		-- entry: {id, name, tag}
 		local cellBtn = Instance.new("ImageButton")
 		cellBtn.BackgroundTransparency = 1
 		cellBtn.Image = ""
 		cellBtn.ZIndex = 3
-		cellBtn.Parent = wearingPage
+		cellBtn.Parent = parent
 		local img = Instance.new("ImageLabel")
 		img.Name = "AssetImage"
 		img.Size = UDim2.fromScale(0.72, 0.62)
@@ -442,11 +676,11 @@ function M.Build(deps)
 		rm.Size = UDim2.fromScale(0.8, 0.3)
 		rm.Position = UDim2.fromScale(0.5, 0.3)
 		rm.AnchorPoint = Vector2.new(0.5, 0.5)
-		rm.BackgroundColor3 = RED
+		rm.BackgroundColor3 = primaryColor
 		rm.TextColor3 = DARK
 		rm.Font = Enum.Font.GothamBold
 		rm.TextSize = 13
-		rm.Text = "REMOVE"
+		rm.Text = primaryText
 		rm.ZIndex = 21
 		rm.Parent = overlay
 		corner(rm, 8)
@@ -476,14 +710,14 @@ function M.Build(deps)
 		rm.Activated:Connect(function()
 			overlay.Visible = false
 			openOverlay = nil
-			entry.onRemove()
+			onPrimary()
 		end)
 	end
 
 	------------------------------------------------------------
 	-- Tab Body Color: pemilih bagian + grid warna (gaya ColourList CAC)
 	------------------------------------------------------------
-	local bodyPage = mkTab("Body Color", 2)
+	local bodyPage = mkTab("Body Color", 3)
 	bodyPage.ScrollBarThickness = 0
 	bodyPage.CanvasSize = UDim2.new(0, 0, 0, 0)
 
@@ -571,7 +805,7 @@ function M.Build(deps)
 	------------------------------------------------------------
 	-- Tab Actions
 	------------------------------------------------------------
-	local actionsPage = mkTab("Actions", 3)
+	local actionsPage = mkTab("Actions", 4)
 	actionsPage.ScrollBarThickness = 0
 	local function actionButton(text, desc, y, fn)
 		local b = Instance.new("TextButton")
@@ -752,7 +986,7 @@ function M.Build(deps)
 				selectedRemove = captured.onRemove
 				eqOptions.Visible = true
 			end)
-			mkWearingCell(entry)
+			mkItemCell(wearingPage, entry, "REMOVE", RED, entry.onRemove)
 		end
 		if holder.Visible then
 			refreshPreview()
@@ -764,6 +998,9 @@ function M.Build(deps)
 	function api.Show()
 		holder.Visible = true
 		refreshPreview()
+		if ensureCatalogLoaded then
+			ensureCatalogLoaded()
+		end
 	end
 	function api.Hide()
 		holder.Visible = false
@@ -780,7 +1017,7 @@ function M.Build(deps)
 	exitBtn.Activated:Connect(api.Hide)
 	exitFallback.Activated:Connect(api.Hide)
 
-	showTab("Wearing")
+	showTab("Catalog")
 	api.Refresh()
 	print("[VLAvatar] UI v" .. UI_VERSION .. " loaded")
 	return api
