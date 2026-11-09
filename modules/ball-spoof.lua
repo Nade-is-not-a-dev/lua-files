@@ -106,7 +106,7 @@ local function unspoofWelded(ball)
 end
 
 local function spoofWelded(ball)
-	if not S.fakeEquipped then
+	if not S.fakeEquipped or S.extremeFast then
 		return
 	end
 	local anchor = weldedAnchor(ball)
@@ -189,7 +189,7 @@ end
 local function scanWeldedBalls()
 	for _, ball in ipairs(CollectionService:GetTagged("WeldedBall")) do
 		if weldedBelongsToLocal(ball) then
-			if S.fakeEquipped then
+			if S.fakeEquipped and not S.extremeFast then
 				spoofWelded(ball)
 			else
 				unspoofWelded(ball)
@@ -445,7 +445,7 @@ local function initBallSpoof()
 		local inScope = SPOOF_RALLY_ALL
 			or (server ~= nil and server == player.Name)
 			or (server == nil and skinIsMine(skinId))
-		if S.fakeEquipped and inScope then
+		if S.fakeEquipped and not S.extremeFast and inScope then
 			local asset = AssetsBall:FindFirstChild(S.fakeEquipped)
 			local fakeItem = ContentItem:Get(S.fakeEquipped)
 			if asset and fakeItem then
@@ -475,7 +475,7 @@ local function initBallSpoof()
 	GhostBallModule.new = function(clip, skinName, parent)
 		-- Hanya spoof bila rally di replay ini dimulai dari serve-ku.
 		local inScope = SPOOF_RALLY_ALL or replayBelongsToMe(clip, skinName)
-		if S.fakeEquipped and inScope then
+		if S.fakeEquipped and not S.extremeFast and inScope then
 			return originalGhostNew(clip, S.fakeEquipped, parent)
 		end
 		return originalGhostNew(clip, skinName, parent)

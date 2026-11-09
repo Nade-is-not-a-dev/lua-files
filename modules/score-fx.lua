@@ -157,6 +157,9 @@ end
 -- melepas atau memulihkan equip server apa pun. Pembawa yang
 -- sudah terpasang adalah efek asli milik user -- dibiarkan saja.
 local function ensureFxCarrier()
+	if S.extremeFast then
+		return
+	end
 	if not S.fakeScoreFx or S.fxCarrierInFlight then
 		return
 	end
@@ -287,6 +290,9 @@ local function initScoreFx()
 		end)
 		local originalPlayScoreEffect = EffectController.PlayScoreEffect
 		EffectController.PlayScoreEffect = function(self, data)
+			if S.extremeFast then
+				return originalPlayScoreEffect(self, data)
+			end
 			if type(data) == "table" and not data.IsReplay and data.Item then
 				if data.Character == player.Character and isLocalInGame() then
 					local gateOff = S.settings[SETTING_MEMBER_WORLD_FX] == false

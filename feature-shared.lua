@@ -98,6 +98,8 @@ local RANDOM_CARD_ID = "RandomFavoritePlayerCard"
 local SETTINGS_GROUP = "VLSettings"
 local SETTING_MEMBER_WORLD_FX = "WorldAffectingScoreFX"
 local SETTINGS_KEY_WORLD_FX = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_WORLD_FX
+local SETTING_MEMBER_EXTREME = "ExtremeUltraFastMode"
+local SETTINGS_KEY_EXTREME = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_EXTREME
 -- Avatar Lite TIDAK lagi jadi anggota grup: anggota grup selalu
 -- dirender game sebagai saklar. Sebagai gantinya panel dibuka dari
 -- baris tombol khusus di daftar utama Settings (pola yang sama
@@ -146,7 +148,7 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true }, -- saklar bagian Settings tambahan
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false }, -- saklar bagian Settings tambahan
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
@@ -280,6 +282,11 @@ local function loadLocal()
 					and type(data.settings[SETTING_MEMBER_WORLD_FX]) == "boolean" then
 					S.settings[SETTING_MEMBER_WORLD_FX] = data.settings[SETTING_MEMBER_WORLD_FX]
 				end
+				if type(data.settings) == "table"
+					and type(data.settings[SETTING_MEMBER_EXTREME]) == "boolean" then
+					S.settings[SETTING_MEMBER_EXTREME] = data.settings[SETTING_MEMBER_EXTREME]
+				end
+				S.extremeFast = S.settings[SETTING_MEMBER_EXTREME] == true
 				if isScoreFx(data.fx)
 					and (not S.realOwned[data.fx] or data.fx == RANDOM_FX_ID) then
 					-- Random Favorite boleh memuat lapis lokal walau
@@ -361,23 +368,27 @@ end
 
 local function applyEquipped()
 	local merged = table.clone(S.serverEquipped)
-	if SuiteActive.Ball and S.fakeEquipped then
+	if SuiteActive.Ball and not S.extremeFast and S.fakeEquipped then
 		merged.Ball = S.fakeEquipped
 	end
-	if SuiteActive.Jersey and S.fakeJersey then
+	if SuiteActive.Jersey and not S.extremeFast and S.fakeJersey then
 		merged.Jersey = S.fakeJersey
 	end
-	if SuiteActive.PlayerCard and S.fakeCard then
+	if SuiteActive.PlayerCard and not S.extremeFast and S.fakeCard then
 		merged.PlayerCard = S.fakeCard
 	end
-	if SuiteActive.ScoreEffect and S.fakeScoreFx then
+	if SuiteActive.ScoreEffect and not S.extremeFast and S.fakeScoreFx then
 		merged.ScoreEffect = S.fakeScoreFx
 	end
 	if not shallowSame(InventoryController.Equipped:get(), merged) then
 		InventoryController.Equipped:set(merged)
 	end
 	if SuiteActive.Ball then
-		applyAssetPatch()
+		if S.extremeFast then
+			restoreAssetPatch()
+		else
+			applyAssetPatch()
+		end
 		if FeatureAPI.scanWeldedBalls then FeatureAPI.scanWeldedBalls() end
 	end
 end
@@ -392,12 +403,12 @@ local function applyFavorites()
 	end
 	pcall(function()
 		local merged = table.clone(S.serverFavorited)
-		if SuiteActive.PlayerCard then
+		if SuiteActive.PlayerCard and not S.extremeFast then
 			for id in pairs(S.fakeCardFavorites) do
 				merged[id] = true
 			end
 		end
-		if SuiteActive.ScoreEffect then
+		if SuiteActive.ScoreEffect and not S.extremeFast then
 			for id in pairs(S.fakeFxFavorites) do
 				merged[id] = true
 			end
@@ -426,7 +437,15 @@ local function injectInventory()
 	local changed = false
 	for _, list in ipairs(activeLists) do
 		for _, id in ipairs(list) do
-			if not merged[id] or merged[id] <= 0 then
+			if S.extremeFast then
+				-- Mode Extreme AKTIF: item palsu DICABUT dari
+				-- Value inventaris (yang asli dari server --
+				-- ada di realOwned -- tidak disentuh).
+				if merged[id] and not S.realOwned[id] then
+					merged[id] = nil
+					changed = true
+				end
+			elseif not merged[id] or merged[id] <= 0 then
 				merged[id] = 1
 				changed = true
 			end
@@ -441,7 +460,12 @@ local function injectInventory()
 		local countsChanged = false
 		for _, list in ipairs(activeLists) do
 			for _, id in ipairs(list) do
-				if not counts[id] then
+				if S.extremeFast then
+					if counts[id] and not S.realOwned[id] then
+						counts[id] = nil
+						countsChanged = true
+					end
+				elseif not counts[id] then
 					counts[id] = 1
 					countsChanged = true
 				end
@@ -455,7 +479,7 @@ local function injectInventory()
 	-- JerseyPreviewController. Normalnya itu objek yang SAMA dengan
 	-- milik InventoryController; bila ternyata beda, suntik juga ke
 	-- sana supaya gembok "tidak dimiliki" di daftar preview hilang.
-	if SuiteActive.Jersey and JerseyPreviewController and JerseyPreviewController.Inventory
+	if not S.extremeFast and SuiteActive.Jersey and JerseyPreviewController and JerseyPreviewController.Inventory
 		and JerseyPreviewController.Inventory ~= InventoryController.Inventory then
 		local pMerged = table.clone(JerseyPreviewController.Inventory:get() or {})
 		local pChanged = false
@@ -473,7 +497,7 @@ local function injectInventory()
 	-- Value Inventory milik ScoreEffectPreviewController (gembok
 	-- tampil bila id tidak ada di sana). Suntik juga bila objeknya
 	-- ternyata berbeda.
-	if SuiteActive.ScoreEffect and ScoreEffectPreviewController and ScoreEffectPreviewController.Inventory
+	if not S.extremeFast and SuiteActive.ScoreEffect and ScoreEffectPreviewController and ScoreEffectPreviewController.Inventory
 		and ScoreEffectPreviewController.Inventory ~= InventoryController.Inventory then
 		local fMerged = table.clone(ScoreEffectPreviewController.Inventory:get() or {})
 		local fChanged = false

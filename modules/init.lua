@@ -24,7 +24,7 @@ local function installEquipSystem()
 	local originalEquip = InventoryService.Equip
 	S.originalEquip = originalEquip
 	InventoryService.Equip = function(_, id, ...)
-		if SuiteActive.Ball and isBall(id) and not S.realOwned[id] then
+		if SuiteActive.Ball and isBall(id) and not S.realOwned[id]  and not S.extremeFast then
 			if S.fakeEquipped == id then
 				S.fakeEquipped = nil -- klik lagi = unequip
 				applyEquipped()
@@ -47,7 +47,7 @@ local function installEquipSystem()
 			end
 			return resolvedPromise(true)
 		end
-		if SuiteActive.Jersey and isJersey(id) and not S.realOwned[id] then
+		if SuiteActive.Jersey and isJersey(id) and not S.realOwned[id]  and not S.extremeFast then
 			if S.fakeJersey == id then
 				S.fakeJersey = nil -- klik lagi = unequip
 				applyEquipped()
@@ -63,7 +63,7 @@ local function installEquipSystem()
 			end
 			return resolvedPromise(true)
 		end
-		if SuiteActive.Emote and isEmote(id) and not S.realOwned[id] then
+		if SuiteActive.Emote and isEmote(id) and not S.realOwned[id]  and not S.extremeFast then
 			-- Equip emote = menaruhnya di slot roda:
 			-- InventoryService:Equip(id, indexSlot) dari mode pilih
 			-- slot (Components/Wheel). Tanpa indeks, pakai slot
@@ -103,7 +103,7 @@ local function installEquipSystem()
 			end
 			return resolvedPromise(true)
 		end
-		if SuiteActive.PlayerCard and isCard(id) and not S.realOwned[id] then
+		if SuiteActive.PlayerCard and isCard(id) and not S.realOwned[id]  and not S.extremeFast then
 			-- Kartu palsu: toggle lokal seperti bola. Halaman kartu
 			-- membaca hasil Equip dengan :expect() dan menganggap
 			-- nilai truthy sebagai PESAN ERROR -- jadi kembalikan
@@ -117,7 +117,7 @@ local function installEquipSystem()
 			saveLocal()
 			return resolvedPromise()
 		end
-		if SuiteActive.ScoreEffect and isScoreFx(id) and not S.realOwned[id] then
+		if SuiteActive.ScoreEffect and isScoreFx(id) and not S.realOwned[id]  and not S.extremeFast then
 			-- Score FX palsu: toggle lokal seperti kartu.
 			if S.fakeScoreFx == id then
 				-- Lapis palsu dilepas: slot server TIDAK disentuh
@@ -144,7 +144,7 @@ local function installEquipSystem()
 			return resolvedPromise(true)
 		end
 		-- Item asli: bersihkan lapisan palsu kategorinya, teruskan.
-		if SuiteActive.ScoreEffect and isScoreFx(id) then
+		if SuiteActive.ScoreEffect and isScoreFx(id)  and not S.extremeFast then
 			-- Catat waktu klik equip asli user: ensureFxCarrier
 			-- tidak boleh menimpa pilihan ini dengan pembawa.
 			S.fxUserEquipAt = os.clock()

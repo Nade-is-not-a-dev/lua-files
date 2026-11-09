@@ -64,7 +64,7 @@ local function initPlayerCard()
 	if PlayerCardController and PlayerCardController.DisplayFlashCard then
 		local originalDisplayFlashCard = PlayerCardController.DisplayFlashCard
 		PlayerCardController.DisplayFlashCard = function(self, data)
-			if type(data) == "table" and data.Player == player then
+			if type(data) == "table" and data.Player == player and not S.extremeFast then
 				local resolved = resolveDisplayCardId()
 				if resolved and resolved ~= data.PlayerCardItemId then
 					data = table.clone(data)

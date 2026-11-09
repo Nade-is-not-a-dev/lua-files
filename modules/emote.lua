@@ -20,8 +20,10 @@ local function applyEmotes()
 	end
 	pcall(function()
 		local merged = table.clone(S.serverEquipped.Emotes or {})
-		for index, emoteId in pairs(S.fakeEmotes) do
-			merged[index] = emoteId
+		if not S.extremeFast then
+			for index, emoteId in pairs(S.fakeEmotes) do
+				merged[index] = emoteId
+			end
 		end
 		-- Hanya :set bila berubah: :set memicu hitung ulang
 		-- Fusion roda emote, dan applyEmotes dipanggil pada

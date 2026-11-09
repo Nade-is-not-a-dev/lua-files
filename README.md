@@ -44,6 +44,14 @@ Inti suite di root repo, modul fitur di `modules/`:
   server + bungkus Jersey Preview).
 - `modules/emote.lua` — modul fitur: spoof emote (slot
   roda palsu + prop lokal untuk emote berproperti).
+- `modules/extreme-ultra-fast.lua` — modul fitur: Extreme
+  Ultra Fast Mode (saklar di grup VL Settings). Visual game
+  dicabut sampai tinggal yang penting (tekstur dunia,
+  SurfaceAppearance, Sky/Atmosfer, partikel + cahaya dinamis,
+  bayangan, PostEffect, kualitas Level 1; karakter, bola, dan
+  net tidak disentuh) DAN semua fitur spoof digerbang mati
+  lewat flag S.extremeFast yang dibaca alat bersama + bungkus
+  tiap modul. Mati = semua dipulihkan, fitur diterapkan lagi.
 - `modules/auto-shiftlock.lua` — putar karakter menghadap
   kamera saat lompat + Redirection/Boom Jump (dulu
   "Face Camera"); tidak menunggu feature-shared.

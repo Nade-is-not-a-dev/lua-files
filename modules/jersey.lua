@@ -108,6 +108,9 @@ local function setJerseyLocal(id)
 end
 
 local function applyJerseyRender()
+	if S.extremeFast then
+		return
+	end
 	if not S.fakeJersey then
 		return
 	end

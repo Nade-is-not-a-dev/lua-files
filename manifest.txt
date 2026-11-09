@@ -13,4 +13,5 @@ modules/settings.lua
 modules/player-card.lua
 modules/jersey.lua
 modules/emote.lua
+modules/extreme-ultra-fast.lua
 modules/auto-shiftlock.lua

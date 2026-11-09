@@ -38,7 +38,7 @@ local function registerSettingsGroup()
 		if not groups.Data[SETTINGS_GROUP] then
 			groups.Data[SETTINGS_GROUP] = {
 				DisplayName = "VL Settings",
-				Members = { SETTING_MEMBER_WORLD_FX },
+				Members = { SETTING_MEMBER_WORLD_FX, SETTING_MEMBER_EXTREME },
 			}
 			table.insert(groups.Order, SETTINGS_GROUP)
 		end
@@ -48,6 +48,9 @@ local function registerSettingsGroup()
 			if type(nameMap) == "table" and nameMap[SETTING_MEMBER_WORLD_FX] == nil then
 				nameMap[SETTING_MEMBER_WORLD_FX] = "World-Affecting Score Effects"
 			end
+			if type(nameMap) == "table" and nameMap[SETTING_MEMBER_EXTREME] == nil then
+				nameMap[SETTING_MEMBER_EXTREME] = "Extreme Ultra Fast Mode"
+			end
 		end)
 		pcall(function()
 			-- Asuransi label di halaman utama (peta milik
@@ -56,6 +59,9 @@ local function registerSettingsGroup()
 			local mainMap = require(ReplicatedFirst:WaitForChild("Controllers"):WaitForChild("SettingsController"):WaitForChild("DisplayNameMap"))
 			if type(mainMap) == "table" and mainMap[SETTINGS_KEY_WORLD_FX] == nil then
 				mainMap[SETTINGS_KEY_WORLD_FX] = "World-Affecting Score Effects"
+			end
+			if type(mainMap) == "table" and mainMap[SETTINGS_KEY_EXTREME] == nil then
+				mainMap[SETTINGS_KEY_EXTREME] = "Extreme Ultra Fast Mode"
 			end
 		end)
 	end)
@@ -76,11 +82,13 @@ local function applyVLSettings()
 	registerSettingsGroup()
 	pcall(function()
 		local current = InterfaceController.Settings:get() or {}
-		if current[SETTINGS_KEY_WORLD_FX] == S.settings[SETTING_MEMBER_WORLD_FX] then
+		if current[SETTINGS_KEY_WORLD_FX] == S.settings[SETTING_MEMBER_WORLD_FX]
+			and current[SETTINGS_KEY_EXTREME] == S.settings[SETTING_MEMBER_EXTREME] then
 			return
 		end
 		local merged = table.clone(current)
 		merged[SETTINGS_KEY_WORLD_FX] = S.settings[SETTING_MEMBER_WORLD_FX]
+		merged[SETTINGS_KEY_EXTREME] = S.settings[SETTING_MEMBER_EXTREME]
 		InterfaceController.Settings:set(merged)
 	end)
 end
@@ -221,6 +229,20 @@ local function initSettings()
 					S.settings[SETTING_MEMBER_WORLD_FX] = value == true
 					applyVLSettings()
 					saveLocal()
+					return resolvedPromise(true)
+				end
+				if key == SETTINGS_KEY_EXTREME then
+					S.settings[SETTING_MEMBER_EXTREME] = value == true
+					-- Balik gerbangnya langsung di sini juga, supaya
+					-- alat bersama + bungkus berhenti menerapkan
+					-- spoof sejak klik ini juga, lalu modul extreme
+					-- mengurus visual + penyegaran terapan.
+					S.extremeFast = value == true
+					applyVLSettings()
+					saveLocal()
+					if FeatureAPI.applyExtremeFast then
+						task.spawn(FeatureAPI.applyExtremeFast, value == true)
+					end
 					return resolvedPromise(true)
 				end
 				return originalChangeSetting(_, key, value, ...)
