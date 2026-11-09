@@ -33,6 +33,10 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `modules/score-fx.lua` — modul fitur: spoof Score FX
   (resolver efek palsu / Random Favorites, carrier, suara
   poin, bungkus PlayScoreEffect, scrub gembok preview).
+- `modules/settings.lua` — modul fitur: grup VL Settings
+  (saklar World-Affecting Score FX + halaman grup) dan baris
+  Settings Avatar Lite (tombol Open-nya nil-guarded sampai
+  modul avatar kembali).
 - `modules/player-card.lua` — modul fitur: spoof kartu
   pemain (resolver kartu tampil + DisplayFlashCard).
 - `modules/jersey.lua` — modul fitur: spoof jersey
@@ -48,10 +52,8 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `VERSION` — versi suite (naikkan saat rilis berarti).
 - `build.py` — penggabung; berjalan lokal maupun di Actions.
 
-Modul fitur lain (settings) sedang dihapus sementara
-dari repo —
-sumbernya tersimpan di riwayat git v0.5.1 dan dikembalikan
-satu per satu.
+Semua modul dari v0.5.1 sudah kembali. Yang masih tinggal di
+monolit: og-tag (Bagian C) dan avatar host (Bagian D).
 
 ## Alur
 

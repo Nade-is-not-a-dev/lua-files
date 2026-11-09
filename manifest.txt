@@ -1,16 +1,15 @@
 # Urutan penggabungan VL Suite (satu file per baris, path relatif
 # terhadap root repo). Baris diawali # diabaikan.
 # Urutan penting: inti (core -> feature-shared) -> modul fitur.
-#
-# Modul fitur lain (settings, emote, jersey) sedang
-# dihapus sementara dari repo
-# (2026-11-08); sumbernya tersimpan di riwayat git v0.5.1 dan
-# dikembalikan satu per satu ke folder modules/.
+# Urutan modul fitur mengikuti v0.5.1 (settings setelah
+# score-fx, sebelum player-card); init dimuat paling awal
+# karena sistem equip/favorite harus siap sebelum modul fitur.
 core.lua
 feature-shared.lua
 modules/init.lua
 modules/ball-spoof.lua
 modules/score-fx.lua
+modules/settings.lua
 modules/player-card.lua
 modules/jersey.lua
 modules/emote.lua
