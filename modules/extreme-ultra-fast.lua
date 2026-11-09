@@ -27,6 +27,13 @@
 -- dipanggil bungkus ChangeSetting di modules/settings.lua
 -- (yang juga membalik S.extremeFast secara langsung, jadi
 -- gerbang tetap bekerja walau modul ini belum termuat).
+-- Menyalakan Extreme dari saklar juga menyalakan Fast Mode
+-- + Ultra Fast Mode MILIK GAME (SettingsService.ChangeSetting
+-- "UltraFastMode"/"FastMode" -- pola yang sama persis dengan
+-- cascade bawaan game: UltraFastMode ON menyalakan FastMode,
+-- dan mematikannya membiarkan FastMode tetap nyala).
+-- Mematikan Extreme TIDAK menyentuh keduanya: Fast/Ultra
+-- game tetap nyala sampai dimatikan sendiri oleh pemain.
 -- Bukan kategori inventory: tanpa suiteActivateFeature.
 ----------------------------------------------------------------
 
@@ -241,6 +248,39 @@ local function setExtremeFast(enabled)
 	xfRefreshFeatures()
 end
 
+-- Cascade ke mode cepat MILIK GAME: menyalakan Extreme juga
+-- menyalakan Ultra Fast Mode + Fast Mode bawaan game lewat
+-- jalur resminya (SettingsService.ChangeSetting), persis
+-- seperti cascade bawaan game sendiri (UltraFastMode ON ->
+-- FastMode ON). Keduanya idempoten: memanggilnya saat sudah
+-- nyala tidak mengubah apa pun. Mematikan Extreme TIDAK
+-- memanggil apa pun di sini -- Fast/Ultra tetap nyala untuk
+-- dimatikan sendiri oleh pemain dari Settings game.
+local function cascadeGameFastModes()
+	if not (SettingsService and SettingsService.ChangeSetting) then
+		return
+	end
+	pcall(function()
+		SettingsService.ChangeSetting(SettingsService, "UltraFastMode", true)
+	end)
+	pcall(function()
+		SettingsService.ChangeSetting(SettingsService, "FastMode", true)
+	end)
+end
+
+-- Titik masuk saklar (FeatureAPI.applyExtremeFast): terapkan
+-- keadaan Extreme, dan KHUSUS saat menyalakan, jalankan
+-- cascade game di atas. Keadaan persisten saat join tidak
+-- lewat sini (lihat init): Fast/Ultra game tersimpan di
+-- server oleh game sendiri, dan yang dimatikan manual oleh
+-- pemain tidak dinyalakan ulang diam-diam.
+local function onExtremeToggled(enabled)
+	setExtremeFast(enabled)
+	if enabled then
+		task.spawn(cascadeGameFastModes)
+	end
+end
+
 local function initExtremeFast()
 	local t0 = os.clock()
 	if not awaitFeatureShared(90) then
@@ -249,10 +289,12 @@ local function initExtremeFast()
 	end
 	local tShared = os.clock()
 	loadLocal()
-	FeatureAPI.applyExtremeFast = setExtremeFast
+	FeatureAPI.applyExtremeFast = onExtremeToggled
 	-- Keadaan persisten dari sesi lalu (saklar ditinggal AKTIF):
 	-- terapkan penuh sekarang -- visual dicabut dan terapan
 	-- fitur ditarik -- tanpa menunggu saklar disentuh lagi.
+	-- TANPA cascade: Fast/Ultra game adalah simpanan server
+	-- game sendiri; yang dimatikan manual pemain biarlah mati.
 	if S.extremeFast then
 		task.spawn(setExtremeFast, true)
 	end
