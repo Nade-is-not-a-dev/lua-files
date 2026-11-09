@@ -7,7 +7,14 @@
 -- 2) saat ability Redirection Jump / Boom Jump diaktifkan.
 -- Dengan LOCK_DIRECTION (core.lua) arah kunci dipertahankan
 -- selama di udara (AutoRotate dimatikan sementara), seperti
--- shiftlock. Modul ini TIDAK menunggu feature-shared: ia
+-- shiftlock. Pelepas kunci berbasis KEADAAN (dicek tiap
+-- frame: tidak di udara lagi / kunci > 2 detik / terdeteksi
+-- teleport), BUKAN hanya tepi transisi mendarat -- tepi itu
+-- bisa terlewat saat game ikut campur di tengah lompatan
+-- (teleport pergantian ronde, fase tunggu serve), dan dulu
+-- AutoRotate tertinggal mati: karakter berjalan sambil
+-- tetap menghadap arah lompatan terakhir (shiftlock
+-- nyangkut). Modul ini TIDAK menunggu feature-shared: ia
 -- hanya memakai player/Knit dari core.
 ----------------------------------------------------------------
 ----------------------------------------------------------------
@@ -65,19 +72,51 @@ local function initAutoShiftlock()
 		end
 	end)
 
-	-- Jalur lompat: deteksi lift-off tiap karakter.
+	-- Jalur lompat: deteksi lift-off tiap karakter. Keadaan
+	-- kunci disimpan di level modul (bukan per-karakter).
 	local heartbeatConn = nil
+	local lockHumanoid = nil
+	local lockBefore = nil
+	local lockSince = 0
+	local LOCK_MAX_SECONDS = 2
+
+	local function releaseLock()
+		if lockHumanoid and lockBefore ~= nil then
+			pcall(function()
+				lockHumanoid.AutoRotate = lockBefore
+			end)
+		end
+		lockHumanoid = nil
+		lockBefore = nil
+	end
+
 	local function watchCharacter(character)
 		if heartbeatConn then
 			heartbeatConn:Disconnect()
+			heartbeatConn = nil
 		end
+		-- Karakter berganti selagi kunci aktif: pulihkan
+		-- humanoid yang lama dulu.
+		releaseLock()
 		local humanoid = character:WaitForChild("Humanoid")
 		local root = character:WaitForChild("HumanoidRootPart")
 		local wasAirborne = humanoid.FloorMaterial == Enum.Material.Air
 		local snapped = false
-		local autoRotateBefore = nil
+		local lastPosition = root.Position
 
 		heartbeatConn = RunService.Heartbeat:Connect(function()
+			-- Teleport (pergantian ronde / penempatan serve):
+			-- posisi melompat jauh dalam satu frame berarti
+			-- game memindahkan karakter -- keadaan lompatan
+			-- dianggap mulai dari nol.
+			local position = root.Position
+			if (position - lastPosition).Magnitude > 15 then
+				releaseLock()
+				snapped = false
+				wasAirborne = humanoid.FloorMaterial == Enum.Material.Air
+			end
+			lastPosition = position
+
 			local airborne = humanoid.FloorMaterial == Enum.Material.Air
 
 			if airborne and not wasAirborne and not snapped
@@ -85,7 +124,9 @@ local function initAutoShiftlock()
 				if faceCamera() then
 					snapped = true
 					if LOCK_DIRECTION then
-						autoRotateBefore = humanoid.AutoRotate
+						lockHumanoid = humanoid
+						lockBefore = humanoid.AutoRotate
+						lockSince = os.clock()
 						humanoid.AutoRotate = false
 					end
 				end
@@ -93,10 +134,15 @@ local function initAutoShiftlock()
 
 			if not airborne and wasAirborne then
 				snapped = false
-				if autoRotateBefore ~= nil then
-					humanoid.AutoRotate = autoRotateBefore
-					autoRotateBefore = nil
-				end
+			end
+
+			-- Pelepas berbasis keadaan: kunci lepas pada frame
+			-- PERTAMA syaratnya terpenuhi (sudah di tanah, atau
+			-- kunci terlalu tua), walau tepi transisi mendarat
+			-- di atas terlewat karena campur tangan game.
+			if lockHumanoid == humanoid
+				and (not airborne or os.clock() - lockSince > LOCK_MAX_SECONDS) then
+				releaseLock()
 			end
 
 			wasAirborne = airborne
