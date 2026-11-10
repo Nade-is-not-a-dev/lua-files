@@ -261,23 +261,42 @@
 ]]
 
 -- === Cek game: hanya jalan di Volleyball Legends ===
--- Memakai GameId (ID universe), BUKAN PlaceId: semua mode VL
--- (lobby, match, training, ranked, dan place lain) berbagi satu
--- GameId yang sama walaupun PlaceId-nya berbeda-beda. Nilai ini
--- terverifikasi untuk place 73956553001240 (root) dan
--- 74691681039273 -- keduanya GameId 6931042565.
--- Cadangan: bila GameId tidak cocok (misalnya place uji), script
--- mengonfirmasi dulu lewat struktur khas VL sebelum berhenti.
+-- Bila game lain terdeteksi, SELURUH suite dibatalkan (return
+-- di level chunk: tidak ada satu pun modul yang termuat).
+-- Pemeriksaan dua lapis:
+-- 1) UTAMA -- GameId (ID universe), BUKAN PlaceId: semua mode
+--    VL (lobby, match, training, ranked, dan place lain)
+--    berbagi satu GameId yang sama walaupun PlaceId-nya
+--    berbeda-beda. Nilai ini terverifikasi untuk place
+--    73956553001240 (root) dan 74691681039273 -- keduanya
+--    GameId 6931042565.
+-- 2) CADANGAN -- bila GameId tidak cocok (misalnya place uji
+--    di luar universe), konfirmasi lewat TANDA TANGAN
+--    STRUKTUR khas VL sebelum jalan: bukan sekadar folder
+--    generik "Content"/"Controllers" (game lain pun punya),
+--    melainkan controller-controller spesifik VL + struktur
+--    Content.Item + paket Knit. Satu saja tidak ketemu ->
+--    dianggap game lain -> batal.
 local VL_GAME_ID = 6931042565
 if game.GameId ~= VL_GAME_ID then
 	local rs = game:GetService("ReplicatedStorage")
 	local rf = game:GetService("ReplicatedFirst")
 	local content = rs:WaitForChild("Content", 20)
-	local looksLikeVL = content and content:FindFirstChild("Item") and rf:FindFirstChild("Controllers")
+	local controllers = rf:FindFirstChild("Controllers")
+	local packages = rs:FindFirstChild("Packages")
+	local looksLikeVL = content ~= nil
+		and content:FindFirstChild("Item") ~= nil
+		and controllers ~= nil
+		and controllers:FindFirstChild("BallController") ~= nil
+		and controllers:FindFirstChild("InventoryController") ~= nil
+		and controllers:FindFirstChild("EffectController") ~= nil
+		and packages ~= nil
+		and packages:FindFirstChild("Knit") ~= nil
 	if not looksLikeVL then
-		warn("[VL Suite] Not Volleyball Legends (GameId " .. tostring(game.GameId) .. ") -- script stopped.")
+		warn("[VL Suite] Game check failed: not Volleyball Legends (GameId " .. tostring(game.GameId) .. ") -- suite cancelled.")
 		return
 	end
+	warn("[VL Suite] Game check: GameId mismatch, passed via VL structure signature.")
 end
 
 local SAVE_FILE = "vl-ball-spoof.json"
