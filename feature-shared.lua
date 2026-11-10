@@ -100,6 +100,8 @@ local SETTING_MEMBER_WORLD_FX = "WorldAffectingScoreFX"
 local SETTINGS_KEY_WORLD_FX = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_WORLD_FX
 local SETTING_MEMBER_EXTREME = "ExtremeUltraFastMode"
 local SETTINGS_KEY_EXTREME = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_EXTREME
+local SETTING_MEMBER_SHIFTLOCK = "AutoShiftlock"
+local SETTINGS_KEY_SHIFTLOCK = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_SHIFTLOCK
 -- Avatar Lite TIDAK lagi jadi anggota grup: anggota grup selalu
 -- dirender game sebagai saklar. Sebagai gantinya panel dibuka dari
 -- baris tombol khusus di daftar utama Settings (pola yang sama
@@ -148,7 +150,7 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false }, -- saklar bagian Settings tambahan
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false }, -- saklar bagian Settings tambahan
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
@@ -246,6 +248,7 @@ local function loadLocal()
 		return
 	end
 	LocalStateLoaded = true
+	S.localStateLoaded = true
 	if not hasFS then
 		return
 	end
@@ -287,6 +290,10 @@ local function loadLocal()
 					S.settings[SETTING_MEMBER_EXTREME] = data.settings[SETTING_MEMBER_EXTREME]
 				end
 				S.extremeFast = S.settings[SETTING_MEMBER_EXTREME] == true
+				if type(data.settings) == "table"
+					and type(data.settings[SETTING_MEMBER_SHIFTLOCK]) == "boolean" then
+					S.settings[SETTING_MEMBER_SHIFTLOCK] = data.settings[SETTING_MEMBER_SHIFTLOCK]
+				end
 				if isScoreFx(data.fx)
 					and (not S.realOwned[data.fx] or data.fx == RANDOM_FX_ID) then
 					-- Random Favorite boleh memuat lapis lokal walau
