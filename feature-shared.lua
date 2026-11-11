@@ -112,10 +112,6 @@ local SETTING_MEMBER_STATS = "StatsSpoof"
 -- saklar loop AUTO. Loop dijalankan modul farm; persistensi ini
 -- yang membuatnya lanjut sendiri setelah rejoin (auto-attach).
 local SETTING_MEMBER_FARM = "AutoFarm"
--- Auto Spin: hanya hidup di simpanan lokal juga; isinya
--- { Style = { Enabled = bool, Targets = {id=true,...} },
---   Ability = { Enabled = bool, Targets = {id=true,...} } }.
-local SETTING_MEMBER_SPIN = "AutoSpin"
 -- Avatar Lite TIDAK lagi jadi anggota grup: anggota grup selalu
 -- dirender game sebagai saklar. Sebagai gantinya panel dibuka dari
 -- baris tombol khusus di daftar utama Settings (pola yang sama
@@ -164,14 +160,13 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, UsernameSpoof = "", StatsSpoof = {}, AutoFarm = false, AutoSpin = { Style = { Enabled = false, Targets = {} }, Ability = { Enabled = false, Targets = {} } } }, -- saklar bagian Settings tambahan + spoof nama/statistik + farm/spin
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, UsernameSpoof = "", StatsSpoof = {}, AutoFarm = false }, -- saklar bagian Settings tambahan + spoof nama/statistik + farm
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
 		usernameSettingsRowBuilt = false,
 		statsSettingsRowBuilt = false,
 		farmSettingsRowBuilt = false,
-		spinSettingsRowBuilt = false,
 		installed = false,
 		patchedAssetId = nil,
 		patchedAssetOriginal = nil,
@@ -330,26 +325,6 @@ local function loadLocal()
 				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_FARM]) == "boolean" then
 					S.settings[SETTING_MEMBER_FARM] = data.settings[SETTING_MEMBER_FARM]
-				end
-				if type(data.settings) == "table"
-					and type(data.settings[SETTING_MEMBER_SPIN]) == "table" then
-					-- Sanitasi AutoSpin: hanya Enabled boolean +
-					-- Targets berisi kunci string bernilai true.
-					local cleanSpin = { Style = { Enabled = false, Targets = {} }, Ability = { Enabled = false, Targets = {} } }
-					for _, kind in ipairs({ "Style", "Ability" }) do
-						local src = data.settings[SETTING_MEMBER_SPIN][kind]
-						if type(src) == "table" then
-							cleanSpin[kind].Enabled = src.Enabled == true
-							if type(src.Targets) == "table" then
-								for id, on in pairs(src.Targets) do
-									if type(id) == "string" and on == true then
-										cleanSpin[kind].Targets[id] = true
-									end
-								end
-							end
-						end
-					end
-					S.settings[SETTING_MEMBER_SPIN] = cleanSpin
 				end
 				if isScoreFx(data.fx)
 					and (not S.realOwned[data.fx] or data.fx == RANDOM_FX_ID) then
@@ -816,7 +791,6 @@ local function initFeatureShared()
 		ReplicatedFirst = ReplicatedFirst,
 		CollectionService = CollectionService,
 		SETTING_MEMBER_FARM = SETTING_MEMBER_FARM,
-		SETTING_MEMBER_SPIN = SETTING_MEMBER_SPIN,
 	}
 	FeatureSharedReady = true
 	print(("[VL Suite] feature-shared ready in %.2fs"):format(os.clock() - t0))

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build bundle otomatisasi VL Suite (auto farm + auto spin):
-# gabungkan automation/auto-farm.lua + automation/auto-spin.lua,
+# Build bundle otomatisasi VL Suite (auto farm):
+# ambil automation/auto-farm.lua,
 # lalu obfuscate dengan Prometheus (config light) menjadi
 # dist/vl-automation.lua -- file yang dimuat VL Suite dari
 # GitHub Pages saat runtime.
@@ -11,7 +11,7 @@
 #   OBF_CONFIG  config Prometheus (default: automation/obfuscate-config.lua)
 #
 # Di GitHub Actions langkah ini boleh dilewati bila secret /
-# repo privat belum diatur: suite tetap jalan, panel farm/spin
+# repo privat belum diatur: suite tetap jalan, panel farm
 # saja yang tidak terbuka (loader suite menanganinya).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,7 +23,7 @@ OBF_CONFIG="${OBF_CONFIG:-automation/obfuscate-config.lua}"
 TMP_PLAIN="$(mktemp)"
 trap 'rm -f "$TMP_PLAIN"' EXIT
 
-cat automation/auto-farm.lua automation/auto-spin.lua > "$TMP_PLAIN"
+cat automation/auto-farm.lua > "$TMP_PLAIN"
 
 mkdir -p dist
 "$LUA51" "$PROMETHEUS/cli.lua" --config "$OBF_CONFIG" --out dist/vl-automation.lua "$TMP_PLAIN"

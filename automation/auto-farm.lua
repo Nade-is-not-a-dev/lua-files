@@ -32,12 +32,12 @@
 --     teleport, suite termuat lagi TANPA perlu autoexec, dan
 --     status AutoFarm yang tersimpan membuat loop lanjut
 --     sendiri. Antrean diperbarui tiap init selama AutoFarm
---     atau AutoSpin masih menyala.
+--     masih menyala.
 --   * Semua state/fungsi modul hidup di SATU tabel lokal
 --     (Farm) -- batas 200 local di cakupan chunk dist.
 --   * Modul ini TIDAK memakai rollback data sama sekali.
 --
--- BUNDLE OTOMATISASI: file ini (bersama auto-spin.lua) TIDAK
+-- BUNDLE OTOMATISASI: file ini TIDAK
 -- digabung ke chunk suite. Ia dimuat suite saat runtime sebagai
 -- bundle terpisah yang di-obfuscate Prometheus (config light),
 -- jadi semua kebutuhan bersamanya diambil dari bridge yang
@@ -61,7 +61,6 @@ local ReplicatedFirst = VLBridge.ReplicatedFirst
 local CollectionService = VLBridge.CollectionService
 local FeatureAPI = VLBridge.FeatureAPI
 local SETTING_MEMBER_FARM = VLBridge.SETTING_MEMBER_FARM
-local SETTING_MEMBER_SPIN = VLBridge.SETTING_MEMBER_SPIN
 
 local Farm = {}
 Farm.RunService = game:GetService("RunService")
@@ -132,14 +131,11 @@ Farm.memLog = ""
 -- Persistensi + auto-attach
 ----------------------------------------------------------------
 
--- Pastikan struktur settings farm/spin ada (simpanan lama dari
+-- Pastikan struktur settings farm ada (simpanan lama dari
 -- versi suite sebelum modul ini ada belum punya kuncinya).
 function Farm.ensureSettings()
 	if type(S.settings[SETTING_MEMBER_FARM]) ~= "boolean" then
 		S.settings[SETTING_MEMBER_FARM] = false
-	end
-	if type(S.settings[SETTING_MEMBER_SPIN]) ~= "table" then
-		S.settings[SETTING_MEMBER_SPIN] = { Style = { Enabled = false, Targets = {} }, Ability = { Enabled = false, Targets = {} } }
 	end
 end
 
@@ -157,14 +153,10 @@ function Farm.queueSelf()
 	end)
 end
 
--- Antrekan ulang hanya bila masih ada otomatisasi yang menyala
--- (farm atau spin); dipanggil modul spin juga lewat FeatureAPI.
+-- Antrekan ulang hanya bila otomatisasi masih menyala.
 function Farm.queueSelfIfActive()
 	Farm.ensureSettings()
-	local spin = S.settings[SETTING_MEMBER_SPIN]
-	local spinOn = type(spin) == "table"
-		and ((spin.Style and spin.Style.Enabled) or (spin.Ability and spin.Ability.Enabled))
-	if S.settings[SETTING_MEMBER_FARM] or spinOn then
+	if S.settings[SETTING_MEMBER_FARM] then
 		Farm.queueSelf()
 	end
 end

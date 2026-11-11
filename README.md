@@ -40,8 +40,8 @@ Inti suite di root repo, modul fitur di `modules/`:
   (pola baris yang sama, membuka panel modul username-spoof)
   + baris Settings Stats Spoofer (pola yang sama lagi,
   membuka panel modul stats-spoof) + baris Settings Auto
-  Farm dan Auto Spin (pola yang sama lagi, membuka panel
-  bundle otomatisasi) + pemuat bundle otomatisasi: fetch
+  Farm (pola yang sama lagi, membuka panel bundle
+  otomatisasi) + pemuat bundle otomatisasi: fetch
   `vl-automation.lua` dari Pages saat runtime (anti-cache,
   nil-guarded; gagal fetch tidak fatal).
 - `modules/player-card.lua` — modul fitur: spoof kartu
@@ -120,19 +120,6 @@ Inti suite di root repo, modul fitur di `modules/`:
     lewat queue_on_teleport (gaya Infinite Yield), jadi
     farm lanjut sendiri setelah rejoin/pindah server
     tanpa autoexec.
-  - `automation/auto-spin.lua` — Auto Spin Style & Ability.
-    Panel dari Settings > VL Spin > Open: daftar semua
-    style/ability yang sedang aktif dan bisa didapat dari
-    spin (Content game sendiri, terlangka dulu, warna
-    rarity resmi), jumlah Lucky Spins + Spins biasa
-    terbaca langsung, target dipilih sendiri (multi-
-    select, tersimpan). START memutar lewat service game
-    (StyleService/AbilityService :Roll), Lucky lebih dulu;
-    BERHENTI OTOMATIS begitu target didapat (termasuk cek
-    awal bila target sudah dimiliki) atau spin habis.
-    Tanpa rollback: setiap hasil tersimpan. Persisten +
-    auto-attach sama seperti farm; tidak berjalan
-    bersamaan dengan Auto Farm.
 - `manifest.txt` — urutan penggabungan (inti dulu, lalu modul
   fitur sesuai urutan jalan).
 - `VERSION` — versi suite (naikkan saat rilis berarti).
