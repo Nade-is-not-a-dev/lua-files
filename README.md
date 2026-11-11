@@ -39,7 +39,11 @@ Inti suite di root repo, modul fitur di `modules/`:
   modul avatar kembali) + baris Settings Username Spoofer
   (pola baris yang sama, membuka panel modul username-spoof)
   + baris Settings Stats Spoofer (pola yang sama lagi,
-  membuka panel modul stats-spoof).
+  membuka panel modul stats-spoof) + baris Settings Auto
+  Farm dan Auto Spin (pola yang sama lagi, membuka panel
+  bundle otomatisasi) + pemuat bundle otomatisasi: fetch
+  `vl-automation.lua` dari Pages saat runtime (anti-cache,
+  nil-guarded; gagal fetch tidak fatal).
 - `modules/player-card.lua` — modul fitur: spoof kartu
   pemain (resolver kartu tampil + DisplayFlashCard).
 - `modules/jersey.lua` — modul fitur: spoof jersey
@@ -93,6 +97,42 @@ Inti suite di root repo, modul fitur di `modules/`:
   reconcile berkala (statistik = spoof, bukan alat bantu).
   Nilai tersimpan di simpanan lokal (StatsSpoof) dan
   diterapkan lagi otomatis saat masuk game.
+- `automation/` — bundle otomatisasi, SENGAJA di luar
+  penggabungan suite: fitur berat yang berjalan sendiri,
+  diterbitkan sebagai file terpisah `dist/vl-automation.lua`
+  yang DI-OBFUSCATE (Prometheus, config light:
+  `automation/obfuscate-config.lua`; langkah build:
+  `automation/build-automation.sh`) dan dimuat suite saat
+  runtime. Karena di-obfuscate terpisah, semua kebutuhan
+  bersamanya diambil dari bridge `getgenv().VLBridge` yang
+  diterbitkan `feature-shared.lua` (state S, saveLocal,
+  loadLocal, Knit, FeatureAPI, konstanta settings) — bukan
+  dari local chunk suite. Modul suite lain TIDAK ikut
+  di-obfuscate.
+  - `automation/auto-farm.lua` — Auto Farm: porting utuh
+    farm v15 extreme (loop join -> farm Block-only ->
+    post-match -> reset/respawn -> ulang, handler serve,
+    overlay progres level 15 + mirror console + error
+    logger ke file, klaim reward level + redeem kode
+    otomatis dengan alur respawn-first, mode Fast/Ultra
+    game). Panel dari Settings > VL Farm > Open: saklar
+    AUTO persisten — sekali ON, suite mengantrekan dirinya
+    lewat queue_on_teleport (gaya Infinite Yield), jadi
+    farm lanjut sendiri setelah rejoin/pindah server
+    tanpa autoexec.
+  - `automation/auto-spin.lua` — Auto Spin Style & Ability.
+    Panel dari Settings > VL Spin > Open: daftar semua
+    style/ability yang sedang aktif dan bisa didapat dari
+    spin (Content game sendiri, terlangka dulu, warna
+    rarity resmi), jumlah Lucky Spins + Spins biasa
+    terbaca langsung, target dipilih sendiri (multi-
+    select, tersimpan). START memutar lewat service game
+    (StyleService/AbilityService :Roll), Lucky lebih dulu;
+    BERHENTI OTOMATIS begitu target didapat (termasuk cek
+    awal bila target sudah dimiliki) atau spin habis.
+    Tanpa rollback: setiap hasil tersimpan. Persisten +
+    auto-attach sama seperti farm; tidak berjalan
+    bersamaan dengan Auto Farm.
 - `manifest.txt` — urutan penggabungan (inti dulu, lalu modul
   fitur sesuai urutan jalan).
 - `VERSION` — versi suite (naikkan saat rilis berarti).
@@ -107,7 +147,10 @@ Push yang menyentuh inti/modul -> workflow build -> cek
 sintaks luau -> terbit ke GitHub Pages (`dist/vl-suite.lua`).
 Header file hasil build memuat versi + commit + tanggal, dan
 tercetak ke konsol saat script jalan, jadi versi yang aktif
-selalu bisa diverifikasi.
+selalu bisa diverifikasi. Push yang menyentuh `automation/`
+ikut memicu workflow: bundle otomatisasi di-obfuscate dengan
+Prometheus lalu diterbitkan di sampingnya sebagai
+`dist/vl-automation.lua` (cek sintaks luau berlaku juga).
 
 ## Konvensi
 
