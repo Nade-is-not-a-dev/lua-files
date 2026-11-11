@@ -295,6 +295,84 @@ local function buildUsernameSettingsRow()
 	end
 end
 
+-- Baris tombol Stats Spoofer di daftar utama Settings, pola
+-- yang sama dengan baris Avatar Lite / Username Spoofer:
+-- header BB_TextLabel + baris B_Template dengan tombol Open
+-- yang membuka panel modul stats-spoof (nil-guarded).
+local function buildStatsSettingsRow()
+	if S.statsSettingsRowBuilt then
+		return
+	end
+	local function findList()
+		local ok, found = pcall(function()
+			return InterfaceController.App.Lobby.Settings.BGFrame.Body.List
+		end)
+		if ok and found then
+			return found
+		end
+		local ok, found = pcall(function()
+			local app = player.PlayerGui:FindFirstChild("App")
+			local lobby = app and app:FindFirstChild("Lobby")
+			local settings = lobby and lobby:FindFirstChild("Settings")
+			local bg = settings and settings:FindFirstChild("BGFrame")
+			local body = bg and bg:FindFirstChild("Body")
+			return body and body:FindFirstChild("List")
+		end)
+		if ok and found then
+			return found
+		end
+		return nil
+	end
+	local deadline = os.clock() + 120
+	local list
+	while os.clock() < deadline do
+		list = findList()
+		if list then
+			break
+		end
+		task.wait(0.5)
+	end
+	if not list then
+		warn("[VL Suite] Stats settings list not found; row not built.")
+		return
+	end
+	if list:FindFirstChild("B_VLStatsRow") then
+		S.statsSettingsRowBuilt = true
+		return
+	end
+	local okBuild, err = pcall(function()
+		local Fusion = require(RS:WaitForChild("Packages"):WaitForChild("Fusion"))
+		local Button = require(ReplicatedFirst:WaitForChild("Components"):WaitForChild("Button"))
+		Fusion.Hydrate(list.BB_TextLabel:Clone())({
+			["Name"] = "B_VLStatsLabel",
+			["Text"] = "VL Stats",
+			["Visible"] = true,
+			["Parent"] = list,
+		})
+		local row = Fusion.Hydrate(list.B_Template:Clone())({
+			["Name"] = "B_VLStatsRow",
+			["Visible"] = true,
+			["Parent"] = list,
+		})
+		row.Setting.Text = "Stats Spoofer"
+		row.ImageButton.KeyCode.Text = "Open"
+		Button(row.ImageButton)({
+			["OnActivated"] = function()
+				local opener = getgenv().VLStatsOpenPanel
+				if opener then
+					pcall(opener)
+				end
+			end,
+		})
+	end)
+	if okBuild then
+		S.statsSettingsRowBuilt = true
+		print("[VL Suite] Stats settings row built (Settings > VL Stats > Open).")
+	else
+		warn("[VL Suite] Stats settings row failed: " .. tostring(err))
+	end
+end
+
 local function initSettings()
 	local t0 = os.clock()
 	if not awaitFeatureShared(90) then
@@ -349,6 +427,7 @@ local function initSettings()
 	task.spawn(buildSettingsSection)
 	task.spawn(buildAvatarSettingsRow)
 	task.spawn(buildUsernameSettingsRow)
+	task.spawn(buildStatsSettingsRow)
 	print(("[VL Suite] settings ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, tShared - t0))
 	suiteModuleLoaded("settings")
 end

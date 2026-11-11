@@ -105,6 +105,9 @@ local SETTINGS_KEY_SHIFTLOCK = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_SHIFTLOCK
 -- Username Spoofer: BUKAN kunci Settings game (tidak ada saklar
 -- grupnya); nilainya hanya hidup di simpanan lokal S.settings.
 local SETTING_MEMBER_USERNAME = "UsernameSpoof"
+-- Stats Spoofer: sama, hanya hidup di simpanan lokal; isinya
+-- tabel {namaField = angka} untuk field yang di-spoof saja.
+local SETTING_MEMBER_STATS = "StatsSpoof"
 -- Avatar Lite TIDAK lagi jadi anggota grup: anggota grup selalu
 -- dirender game sebagai saklar. Sebagai gantinya panel dibuka dari
 -- baris tombol khusus di daftar utama Settings (pola yang sama
@@ -153,11 +156,12 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, UsernameSpoof = "" }, -- saklar bagian Settings tambahan + nama spoof
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, UsernameSpoof = "", StatsSpoof = {} }, -- saklar bagian Settings tambahan + spoof nama/statistik
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
 		usernameSettingsRowBuilt = false,
+		statsSettingsRowBuilt = false,
 		installed = false,
 		patchedAssetId = nil,
 		patchedAssetOriginal = nil,
@@ -301,6 +305,17 @@ local function loadLocal()
 				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_USERNAME]) == "string" then
 					S.settings[SETTING_MEMBER_USERNAME] = data.settings[SETTING_MEMBER_USERNAME]
+				end
+				if type(data.settings) == "table"
+					and type(data.settings[SETTING_MEMBER_STATS]) == "table" then
+					local cleanStats = {}
+					for _, field in ipairs({ "Wins", "Losses", "MVPs", "Games", "Points", "Spikes", "Blocks", "Aces", "Saves", "Elo" }) do
+						local v = data.settings[SETTING_MEMBER_STATS][field]
+						if type(v) == "number" and v >= 0 then
+							cleanStats[field] = math.floor(v)
+						end
+					end
+					S.settings[SETTING_MEMBER_STATS] = cleanStats
 				end
 				if isScoreFx(data.fx)
 					and (not S.realOwned[data.fx] or data.fx == RANDOM_FX_ID) then

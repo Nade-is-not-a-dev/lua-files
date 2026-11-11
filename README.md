@@ -37,7 +37,9 @@ Inti suite di root repo, modul fitur di `modules/`:
   (saklar World-Affecting Score FX + halaman grup) dan baris
   Settings Avatar Lite (tombol Open-nya nil-guarded sampai
   modul avatar kembali) + baris Settings Username Spoofer
-  (pola baris yang sama, membuka panel modul username-spoof).
+  (pola baris yang sama, membuka panel modul username-spoof)
+  + baris Settings Stats Spoofer (pola yang sama lagi,
+  membuka panel modul stats-spoof).
 - `modules/player-card.lua` — modul fitur: spoof kartu
   pemain (resolver kartu tampil + DisplayFlashCard).
 - `modules/jersey.lua` — modul fitur: spoof jersey
@@ -70,6 +72,27 @@ Inti suite di root repo, modul fitur di `modules/`:
   (diterapkan ulang tiap respawn). Client-side saja; pemain
   lain tetap melihat nama asli. Nama tersimpan di simpanan
   lokal dan diterapkan lagi otomatis saat masuk game.
+- `modules/stats-spoof.lua` — modul fitur: Stats Spoofer.
+  Panel (dibuka dari Settings > VL Stats > Open) berisi 10
+  kotak angka: Wins, Losses, MVPs, Games, Points, Spikes,
+  Blocks, Aces, Saves, Elo (kotak kosong = tidak di-spoof).
+  Tiga permukaan ditimpa, semua client-side: (1) flash card
+  — bungkus DisplayFlashCard kedua setelah player-card,
+  menimpa Context.Custom (Wins/Losses/SeasonRank dari Elo
+  via Configuration.Ranks game sendiri) dan Context.
+  SingleStat sesuai Metadata.Stat kartu; (2) halaman Career
+  — Fusion Value CareerController.Career ditimpa klon
+  berangka spoof, sinkron server (ProfileUpdated "Career" +
+  CareerService.DataUpdated) dicerminkan ke snapshot asli
+  lalu ditimpa lagi; (3) tab Ranked — InterfaceController.
+  Ranked adalah Computed dari Seasonal, jadi Seasonal
+  ditimpa klon dengan .Ranked spoof (tipe Seasonal membawa
+  target; tipe lain di-nol-kan agar agregat pas), cermin
+  RankedService.DataUpdated juga dijaga. Reset memulihkan
+  snapshot asli. Digembok Extreme Ultra Fast Mode lewat
+  reconcile berkala (statistik = spoof, bukan alat bantu).
+  Nilai tersimpan di simpanan lokal (StatsSpoof) dan
+  diterapkan lagi otomatis saat masuk game.
 - `manifest.txt` — urutan penggabungan (inti dulu, lalu modul
   fitur sesuai urutan jalan).
 - `VERSION` — versi suite (naikkan saat rilis berarti).

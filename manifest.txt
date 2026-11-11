@@ -16,3 +16,4 @@ modules/emote.lua
 modules/extreme-ultra-fast.lua
 modules/auto-shiftlock.lua
 modules/username-spoof.lua
+modules/stats-spoof.lua
