@@ -13,7 +13,7 @@
 --     ReelFinished) -> reset/respawn -> join lagi. Serve
 --     ditangani handler serve (Toss x2 -> melangkah ke bawah
 --     bola -> Jump -> burst Spike di apex).
---   * Overlay progres level 15 + klaim Level Rewards + redeem
+--   * Progres level 15 + klaim Level Rewards + redeem
 --     kode otomatis (batch Update 95) dengan alur respawn-first
 --     bila level 15 tercapai di tengah match, console mirror,
 --     dan error context logger ke VolleyballFarmLogs/.
@@ -21,11 +21,14 @@
 --     saat modul init (persis seperti v15 saat startup).
 --
 -- Perbedaan dari standalone (integrasi suite):
---   * TIDAK ada GUI AUTO sendiri: saklar utamanya adalah
---     S.settings.AutoFarm (persisten di vl-ball-spoof.json),
---     dikendalikan dari panel Settings "VL Farm". GUI farm
---     kecil v15 (toggle TP/BALL/SPIKE/JUMP + kotak interval +
---     status) tetap ada, tampil saat AUTO menyala.
+--   * TIDAK ada HUD di layar sama sekali: saklar utamanya
+--     adalah S.settings.AutoFarm (persisten di
+--     vl-ball-spoof.json), dan SEMUA kontrol hidup di panel
+--     Settings "VL Farm" -- saklar AUTO, toggle manual
+--     TP/BALL/SPIKE/JUMP, kotak interval Block, status, dan
+--     progres level 15 sebagai teks. Overlay level + console
+--     mirror v15 tidak dibawa; error logger tetap menulis
+--     ke file workspace seperti v15.
 --   * AUTO-ATTACH ala Infinite Yield: saat AUTO dinyalakan,
 --     suite mengantrekan loadstring-nya sendiri lewat
 --     queue_on_teleport, jadi setelah rejoin / pindah server /
@@ -103,7 +106,7 @@ Farm.reelActive = false
 Farm.reelStartedAt = 0
 Farm.pendingRespawnRedeem = false
 Farm.redeemSignal = nil
--- Overlay / redeem
+-- Progres / redeem
 Farm.curLevel = 0
 Farm.curXP = nil
 Farm.levelConfirmed = false
@@ -112,13 +115,13 @@ Farm.redeemRunning = false
 Farm.redeemDone = false
 Farm.levelBaselineKnown = false
 Farm.wasBelowTarget = false
--- GUI
-Farm.gui = nil -- ScreenGui panel farm kecil (sg v15)
-Farm.statusLbl = nil
-Farm.overlayGui = nil -- ScreenGui overlay level + console (og v15)
+-- GUI: hanya panel Settings (tanpa HUD di layar)
 Farm.panelGui = nil
 Farm.panelToggleBtn = nil
 Farm.panelStatusLbl = nil
+Farm.progLevelLbl = nil
+Farm.progSubLbl = nil
+Farm.progStatusLbl = nil
 -- Error logger
 Farm.logBuffer = {}
 Farm.pendingCaptures = {}
@@ -231,12 +234,9 @@ function Farm.acquireRemotes()
 end
 
 ----------------------------------------------------------------
--- GUI farm kecil (panel v15: toggle + interval + status)
+-- Status + toggle manual (kontrolnya di panel Settings)
 ----------------------------------------------------------------
 function Farm.setStatus(txt)
-	if Farm.statusLbl then
-		Farm.statusLbl.Text = "AUTO: " .. txt
-	end
 	Farm.statusText = txt
 	if Farm.panelStatusLbl then
 		Farm.panelStatusLbl.Text = "Status: " .. txt
@@ -250,88 +250,6 @@ function Farm.setToggle(name, on)
 	if b then
 		b.Text = name .. " " .. (Farm.flags[name] and "ON" or "OFF")
 		b.BackgroundColor3 = Farm.flags[name] and Color3.fromRGB(0, 140, 0) or Color3.fromRGB(55, 55, 55)
-	end
-end
-
-function Farm.buildGui()
-	if Farm.gui then
-		return
-	end
-	local pg = player:WaitForChild("PlayerGui")
-	local sg = Instance.new("ScreenGui")
-	sg.Name = "VLFarmGui"
-	sg.ResetOnSpawn = false
-	sg.Enabled = false
-	sg.Parent = pg
-
-	local f = Instance.new("Frame")
-	f.Size = UDim2.new(0, 150, 0, 235)
-	f.Position = UDim2.new(0.05, 0, 0.3, 0)
-	f.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	f.BorderSizePixel = 0
-	f.Active = true
-	f.Draggable = true
-	f.Parent = sg
-
-	local function mkTog(y, txt)
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(0, 65, 0, 24)
-		b.Position = UDim2.new(0, 8, 0, y)
-		b.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-		b.Text = txt .. " OFF"
-		b.TextColor3 = Color3.new(1, 1, 1)
-		b.TextSize = 12
-		b.Font = Enum.Font.SourceSansBold
-		b.Parent = f
-		b.MouseButton1Click:Connect(function()
-			Farm.setToggle(txt, not Farm.flags[txt])
-		end)
-		Farm.togButtons[txt] = b
-		return b
-	end
-	mkTog(8, "TP")
-	mkTog(36, "BALL")
-	mkTog(64, "SPIKE")
-	mkTog(92, "JUMP")
-
-	local tb = Instance.new("TextBox")
-	tb.Size = UDim2.new(0, 134, 0, 24)
-	tb.Position = UDim2.new(0, 8, 0, 122)
-	tb.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	tb.Text = "0"
-	tb.PlaceholderText = "interval"
-	tb.TextColor3 = Color3.new(1, 1, 1)
-	tb.TextSize = 13
-	tb.Font = Enum.Font.SourceSans
-	tb.ClearTextOnFocus = false
-	tb.Parent = f
-	tb:GetPropertyChangedSignal("Text"):Connect(function()
-		Farm.intervalText = tb.Text
-	end)
-
-	local statusLbl = Instance.new("TextLabel")
-	statusLbl.Size = UDim2.new(0, 134, 0, 48)
-	statusLbl.Position = UDim2.new(0, 8, 0, 180)
-	statusLbl.BackgroundTransparency = 1
-	statusLbl.Text = "AUTO: idle"
-	statusLbl.TextColor3 = Color3.fromRGB(180, 180, 180)
-	statusLbl.TextSize = 11
-	statusLbl.Font = Enum.Font.SourceSans
-	statusLbl.TextWrapped = true
-	statusLbl.TextXAlignment = Enum.TextXAlignment.Left
-	statusLbl.TextYAlignment = Enum.TextYAlignment.Top
-	statusLbl.Parent = f
-	Farm.statusLbl = statusLbl
-	Farm.gui = sg
-end
-
-function Farm.setGuiVisible(v)
-	Farm.buildGui()
-	if Farm.gui then
-		Farm.gui.Enabled = v == true
-	end
-	if Farm.overlayGui then
-		Farm.overlayGui.Enabled = v == true
 	end
 end
 
@@ -427,7 +345,7 @@ function Farm.doBlock(ball, bid, look, move)
 end
 
 -- Loop aksi farm: Block paralel / Spike manual / Jump, mengikuti
--- toggle GUI; interval dari kotak interval (default 0).
+-- toggle panel; interval dari kotak interval (default 0).
 function Farm.startActionLoop()
 	task.spawn(function()
 		while true do
@@ -1231,7 +1149,6 @@ function Farm.setEnabled(on)
 	saveLocal()
 	if Farm.running then
 		Farm.queueSelf()
-		Farm.setGuiVisible(true)
 		Farm.setStatus("AUTO dinyalakan")
 	else
 		Farm.setFarm(false)
@@ -1241,7 +1158,7 @@ function Farm.setEnabled(on)
 end
 
 ----------------------------------------------------------------
--- Overlay progres level 15 + klaim reward + redeem kode
+-- Progres level 15 + klaim reward + redeem kode
 -- Level dari atribut pemain "User_Level" (yang sama yang diikat
 -- UI game); progres XP memakai Tools.Level + DataService
 -- "Career", persis seperti bar level game sendiri.
@@ -1390,10 +1307,7 @@ function Farm.tryAutoRedeem()
 	Farm.startRedeem()
 end
 
-function Farm.refreshOverlay()
-	if not Farm.ovLevel then
-		return
-	end
+function Farm.refreshProgress()
 	local lv = Farm.readLevelAttr()
 	if lv then
 		Farm.curLevel = lv
@@ -1424,10 +1338,12 @@ function Farm.refreshOverlay()
 	if not frac then
 		frac = math.clamp(Farm.curLevel / Farm.TARGET_LEVEL, 0, 1)
 	end
-	Farm.ovLevel.Text = "Level " .. Farm.curLevel .. " / " .. Farm.TARGET_LEVEL
-	Farm.barFill.Size = UDim2.fromScale(frac, 1)
+	if Farm.progLevelLbl then
+		Farm.progLevelLbl.Text = "Progress: Level " .. Farm.curLevel .. " / " .. Farm.TARGET_LEVEL
+	end
+	local subTxt
 	if Farm.curLevel >= Farm.TARGET_LEVEL then
-		Farm.ovSub.Text = "Target tercapai! (" .. math.floor(frac * 100) .. "%)"
+		subTxt = "Target tercapai! (" .. math.floor(frac * 100) .. "%)"
 	else
 		local xpTxt = ""
 		if Farm.curXP and Farm.LevelTools then
@@ -1438,99 +1354,32 @@ function Farm.refreshOverlay()
 				xpTxt = ("XP %d / %d - "):format(Farm.curXP, need)
 			end
 		end
-		Farm.ovSub.Text = xpTxt .. math.floor(frac * 100) .. "% - sisa " .. (Farm.TARGET_LEVEL - Farm.curLevel) .. " level lagi"
+		subTxt = xpTxt .. math.floor(frac * 100) .. "% - sisa " .. (Farm.TARGET_LEVEL - Farm.curLevel) .. " level lagi"
 	end
-	Farm.ovStatus.Text = Farm.redeemState
+	if Farm.progSubLbl then
+		Farm.progSubLbl.Text = subTxt
+	end
+	if Farm.progStatusLbl then
+		Farm.progStatusLbl.Text = "Redeem: " .. Farm.redeemState
+	end
 	Farm.tryAutoRedeem()
 end
 
-function Farm.buildOverlay()
-	if Farm.overlayGui then
-		return
-	end
-	local pg = player:WaitForChild("PlayerGui")
-	local og = Instance.new("ScreenGui")
-	og.Name = "VLFarmOverlay"
-	og.ResetOnSpawn = false
-	og.DisplayOrder = 100
-	og.Enabled = false
-	og.Parent = pg
-
-	local panel = Instance.new("Frame")
-	panel.Name = "Panel"
-	panel.AnchorPoint = Vector2.new(0.5, 0.5)
-	-- Panel + console di bawahnya terpusat sebagai SATU grup
-	-- (268 px), jadi tidak ada yang keluar layar.
-	panel.Position = UDim2.new(0.5, 0, 0.5, -88)
-	panel.Size = UDim2.new(0, 280, 0, 92)
-	panel.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-	panel.BackgroundTransparency = 0.25
-	panel.BorderSizePixel = 0
-	panel.Active = false
-	panel.Parent = og
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = panel
-
-	local function mkLabel(y, h, size, bold, color)
-		local l = Instance.new("TextLabel")
-		l.Size = UDim2.new(1, -16, 0, h)
-		l.Position = UDim2.new(0, 8, 0, y)
-		l.BackgroundTransparency = 1
-		l.TextColor3 = color or Color3.new(1, 1, 1)
-		l.TextSize = size
-		l.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
-		l.TextXAlignment = Enum.TextXAlignment.Center
-		l.Text = ""
-		l.Parent = panel
-		return l
-	end
-	local ovTitle = mkLabel(4, 16, 12, true, Color3.fromRGB(170, 170, 190))
-	ovTitle.Text = "PROGRESS KE LEVEL " .. Farm.TARGET_LEVEL
-	Farm.ovLevel = mkLabel(20, 26, 22, true)
-	Farm.ovLevel.Text = "Level ? / " .. Farm.TARGET_LEVEL
-
-	local barBack = Instance.new("Frame")
-	barBack.Size = UDim2.new(1, -16, 0, 12)
-	barBack.Position = UDim2.new(0, 8, 0, 50)
-	barBack.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-	barBack.BorderSizePixel = 0
-	barBack.Parent = panel
-	local barCorner = Instance.new("UICorner")
-	barCorner.CornerRadius = UDim.new(1, 0)
-	barCorner.Parent = barBack
-	local barFill = Instance.new("Frame")
-	barFill.Size = UDim2.fromScale(0, 1)
-	barFill.BackgroundColor3 = Color3.fromRGB(80, 210, 120)
-	barFill.BorderSizePixel = 0
-	barFill.Parent = barBack
-	local fillCorner = Instance.new("UICorner")
-	fillCorner.CornerRadius = UDim.new(1, 0)
-	fillCorner.Parent = barFill
-	Farm.barFill = barFill
-
-	Farm.ovSub = mkLabel(64, 12, 11, false, Color3.fromRGB(200, 200, 210))
-	Farm.ovStatus = mkLabel(76, 12, 11, true, Color3.fromRGB(255, 210, 90))
-
-	Farm.buildConsole(og)
-	Farm.overlayGui = og
-end
-
--- Thread overlay: refresh berkala + XP poll + koordinator
+-- Thread progres: refresh berkala + XP poll + koordinator
 -- redeem untuk kasus AUTO mati + koneksi event level.
-function Farm.startOverlayLoops()
+function Farm.startProgressLoops()
 	Farm.redeemSignal = Farm.startRedeem
 	pcall(function()
 		player:GetAttributeChangedSignal("User_Level"):Connect(function()
 			Farm.refreshXP()
-			Farm.refreshOverlay()
+			Farm.refreshProgress()
 		end)
 	end)
 	if Farm.LevelUpRE then
 		Farm.LevelUpRE.OnClientEvent:Connect(function()
-			print("[LEVEL] LevelUp event, refreshing overlay")
+			print("[LEVEL] LevelUp event, refreshing progress")
 			Farm.refreshXP()
-			Farm.refreshOverlay()
+			Farm.refreshProgress()
 		end)
 	end
 	if Farm.ProfileUpdatedRE then
@@ -1542,7 +1391,7 @@ function Farm.startOverlayLoops()
 				if ok and typeof(xp) == "number" then
 					Farm.curXP = xp
 				end
-				Farm.refreshOverlay()
+				Farm.refreshProgress()
 			end
 		end)
 	end
@@ -1567,7 +1416,7 @@ function Farm.startOverlayLoops()
 	task.spawn(function()
 		Farm.refreshXP()
 		while true do
-			Farm.refreshOverlay()
+			Farm.refreshProgress()
 			task.wait(2)
 		end
 	end)
@@ -1576,154 +1425,6 @@ function Farm.startOverlayLoops()
 			task.wait(15)
 			Farm.refreshXP()
 		end
-	end)
-end
-
-----------------------------------------------------------------
--- Console mirror (di bawah overlay level)
--- Mencerminkan keluaran console developer (print/warn/error
--- semua script klien) lewat LogService.MessageOut, jadi tidak
--- perlu membuka dev console di HP. Maksimal 80 baris terakhir.
-----------------------------------------------------------------
-Farm.TYPE_COLORS = {
-	[Enum.MessageType.MessageOutput] = Color3.fromRGB(225, 225, 230),
-	[Enum.MessageType.MessageInfo] = Color3.fromRGB(120, 180, 255),
-	[Enum.MessageType.MessageWarning] = Color3.fromRGB(255, 200, 80),
-	[Enum.MessageType.MessageError] = Color3.fromRGB(255, 95, 95),
-}
-Farm.MAX_LOG_LINES = 80
-Farm.logCount = 0
-
-function Farm.buildConsole(og)
-	local consoleFrame = Instance.new("Frame")
-	consoleFrame.Name = "Console"
-	consoleFrame.AnchorPoint = Vector2.new(0.5, 0)
-	consoleFrame.Position = UDim2.new(0.5, 0, 0.5, -34)
-	consoleFrame.Size = UDim2.new(0.92, 0, 0, 140)
-	consoleFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
-	consoleFrame.BackgroundTransparency = 0.25
-	consoleFrame.BorderSizePixel = 0
-	consoleFrame.Active = false
-	consoleFrame.Parent = og
-	local cap = Instance.new("UISizeConstraint")
-	cap.MaxSize = Vector2.new(440, 140)
-	cap.Parent = consoleFrame
-	local cc = Instance.new("UICorner")
-	cc.CornerRadius = UDim.new(0, 10)
-	cc.Parent = consoleFrame
-
-	local title = Instance.new("TextLabel")
-	title.Size = UDim2.new(1, -12, 0, 16)
-	title.Position = UDim2.new(0, 6, 0, 2)
-	title.BackgroundTransparency = 1
-	title.Text = "CONSOLE"
-	title.TextColor3 = Color3.fromRGB(150, 150, 170)
-	title.TextSize = 11
-	title.Font = Enum.Font.GothamBold
-	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.Parent = consoleFrame
-
-	local scroll = Instance.new("ScrollingFrame")
-	scroll.Name = "Log"
-	scroll.Size = UDim2.new(1, -12, 1, -24)
-	scroll.Position = UDim2.new(0, 6, 0, 20)
-	scroll.BackgroundTransparency = 1
-	scroll.BorderSizePixel = 0
-	scroll.ScrollBarThickness = 4
-	scroll.ScrollBarImageColor3 = Color3.fromRGB(110, 110, 130)
-	scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-	scroll.ScrollingDirection = Enum.ScrollingDirection.Y
-	scroll.Parent = consoleFrame
-	Farm.consoleScroll = scroll
-
-	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 2)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = scroll
-	Farm.consoleLayout = layout
-
-	-- Pin ke baris terbaru dipicu perubahan AbsoluteContentSize
-	-- (tinggi baris terbungkus baru stabil beberapa frame setelah
-	-- ditambahkan; timer tetap akan meleset).
-	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		task.defer(function()
-			Farm.pinConsole()
-		end)
-	end)
-
-	-- Isi awal dari riwayat console sebelum script ini jalan.
-	pcall(function()
-		local history = Farm.LogService:GetLogHistory()
-		for _, entry in history do
-			Farm.addLogLine(entry.message, entry.messageType, entry.timestamp)
-		end
-	end)
-	Farm.LogService.MessageOut:Connect(function(message, msgType)
-		Farm.addLogLine(message, msgType, os.time())
-	end)
-end
-
-function Farm.pinConsole()
-	local scroll = Farm.consoleScroll
-	local layout = Farm.consoleLayout
-	if not (scroll and layout) then
-		return
-	end
-	local y = layout.AbsoluteContentSize.Y
-	if y > 0 then
-		scroll.CanvasPosition = Vector2.new(0, y)
-	end
-end
-
-function Farm.addLogLine(text, msgType, epoch)
-	local scroll = Farm.consoleScroll
-	if not scroll then
-		return
-	end
-	Farm.logCount = Farm.logCount + 1
-	local stamp = ""
-	if epoch then
-		local ok, s = pcall(function()
-			return os.date("%H:%M:%S", epoch)
-		end)
-		if ok then
-			stamp = "[" .. s .. "] "
-		end
-	end
-	local l = Instance.new("TextLabel")
-	l.LayoutOrder = Farm.logCount
-	l.Size = UDim2.new(1, 0, 0, 0)
-	l.AutomaticSize = Enum.AutomaticSize.Y
-	l.BackgroundTransparency = 1
-	l.Text = stamp .. tostring(text)
-	l.TextColor3 = Farm.TYPE_COLORS[msgType] or Farm.TYPE_COLORS[Enum.MessageType.MessageOutput]
-	l.TextSize = 12
-	l.Font = Enum.Font.Code
-	l.TextWrapped = true
-	l.TextXAlignment = Enum.TextXAlignment.Left
-	l.TextYAlignment = Enum.TextYAlignment.Top
-	l.Parent = scroll
-
-	-- Pangkas baris lama (urut LayoutOrder = yang tertua dulu).
-	local labels = {}
-	for _, child in scroll:GetChildren() do
-		if child:IsA("TextLabel") then
-			table.insert(labels, child)
-		end
-	end
-	table.sort(labels, function(a, b)
-		return a.LayoutOrder < b.LayoutOrder
-	end)
-	local excess = #labels - Farm.MAX_LOG_LINES
-	for i = 1, excess do
-		labels[i]:Destroy()
-	end
-	task.defer(function()
-		Farm.pinConsole()
-	end)
-	task.delay(0.15, function()
-		Farm.pinConsole()
 	end)
 end
 
@@ -1947,7 +1648,7 @@ function Farm.buildPanel()
 
 	local frame = Instance.new("Frame")
 	frame.Name = "Panel"
-	frame.Size = UDim2.fromOffset(360, 300)
+	frame.Size = UDim2.fromOffset(360, 436)
 	frame.Position = UDim2.fromScale(0.5, 0.5)
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	frame.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
@@ -2021,26 +1722,102 @@ function Farm.buildPanel()
 		Farm.setEnabled(not Farm.running)
 	end)
 
-	local uiBtn = Instance.new("TextButton")
-	uiBtn.Size = UDim2.new(1, 0, 0, 36)
-	uiBtn.Position = UDim2.fromOffset(0, 122)
-	uiBtn.BackgroundColor3 = Color3.fromRGB(52, 52, 62)
-	uiBtn.Font = Enum.Font.Gotham
-	uiBtn.TextSize = 13
-	uiBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	uiBtn.Text = "Tampilkan / Sembunyikan UI Farm"
-	uiBtn.Parent = frame
-	local uiCorner = Instance.new("UICorner")
-	uiCorner.CornerRadius = UDim.new(0, 8)
-	uiCorner.Parent = uiBtn
-	uiBtn.Activated:Connect(function()
-		local nowVisible = not (Farm.gui and Farm.gui.Enabled)
-		Farm.setGuiVisible(nowVisible)
+	local manualLbl = Instance.new("TextLabel")
+	manualLbl.Size = UDim2.new(1, 0, 0, 16)
+	manualLbl.Position = UDim2.fromOffset(0, 122)
+	manualLbl.BackgroundTransparency = 1
+	manualLbl.Font = Enum.Font.GothamBold
+	manualLbl.TextSize = 12
+	manualLbl.TextColor3 = Color3.fromRGB(170, 170, 190)
+	manualLbl.TextXAlignment = Enum.TextXAlignment.Left
+	manualLbl.Text = "KONTROL MANUAL (dulu HUD v15)"
+	manualLbl.Parent = frame
+
+	for i, name in ipairs({ "TP", "BALL", "SPIKE", "JUMP" }) do
+		local b = Instance.new("TextButton")
+		b.Size = UDim2.new(0, 77, 0, 32)
+		b.Position = UDim2.fromOffset((i - 1) * 83, 142)
+		b.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+		b.Font = Enum.Font.GothamBold
+		b.TextSize = 12
+		b.TextColor3 = Color3.fromRGB(255, 255, 255)
+		b.Text = name .. " OFF"
+		b.Parent = frame
+		local bc = Instance.new("UICorner")
+		bc.CornerRadius = UDim.new(0, 8)
+		bc.Parent = b
+		Farm.togButtons[name] = b
+		b.Activated:Connect(function()
+			Farm.setToggle(name, not Farm.flags[name])
+		end)
+		Farm.setToggle(name, Farm.flags[name])
+	end
+
+	local intLbl = Instance.new("TextLabel")
+	intLbl.Size = UDim2.new(1, -100, 0, 28)
+	intLbl.Position = UDim2.fromOffset(0, 184)
+	intLbl.BackgroundTransparency = 1
+	intLbl.Font = Enum.Font.Gotham
+	intLbl.TextSize = 13
+	intLbl.TextColor3 = Color3.fromRGB(190, 190, 200)
+	intLbl.TextXAlignment = Enum.TextXAlignment.Left
+	intLbl.Text = "Interval Block (detik)"
+	intLbl.Parent = frame
+
+	local intBox = Instance.new("TextBox")
+	intBox.Size = UDim2.fromOffset(90, 28)
+	intBox.Position = UDim2.new(1, -90, 0, 184)
+	intBox.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+	intBox.Font = Enum.Font.Gotham
+	intBox.TextSize = 13
+	intBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+	intBox.Text = Farm.intervalText
+	intBox.PlaceholderText = "0"
+	intBox.ClearTextOnFocus = false
+	intBox.Parent = frame
+	local intCorner = Instance.new("UICorner")
+	intCorner.CornerRadius = UDim.new(0, 6)
+	intCorner.Parent = intBox
+	intBox:GetPropertyChangedSignal("Text"):Connect(function()
+		Farm.intervalText = intBox.Text
 	end)
 
+	Farm.progLevelLbl = Instance.new("TextLabel")
+	Farm.progLevelLbl.Size = UDim2.new(1, 0, 0, 20)
+	Farm.progLevelLbl.Position = UDim2.fromOffset(0, 226)
+	Farm.progLevelLbl.BackgroundTransparency = 1
+	Farm.progLevelLbl.Font = Enum.Font.GothamBold
+	Farm.progLevelLbl.TextSize = 14
+	Farm.progLevelLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Farm.progLevelLbl.TextXAlignment = Enum.TextXAlignment.Left
+	Farm.progLevelLbl.Text = "Progress: Level ? / " .. Farm.TARGET_LEVEL
+	Farm.progLevelLbl.Parent = frame
+
+	Farm.progSubLbl = Instance.new("TextLabel")
+	Farm.progSubLbl.Size = UDim2.new(1, 0, 0, 16)
+	Farm.progSubLbl.Position = UDim2.fromOffset(0, 248)
+	Farm.progSubLbl.BackgroundTransparency = 1
+	Farm.progSubLbl.Font = Enum.Font.Gotham
+	Farm.progSubLbl.TextSize = 12
+	Farm.progSubLbl.TextColor3 = Color3.fromRGB(200, 200, 210)
+	Farm.progSubLbl.TextXAlignment = Enum.TextXAlignment.Left
+	Farm.progSubLbl.Text = ""
+	Farm.progSubLbl.Parent = frame
+
+	Farm.progStatusLbl = Instance.new("TextLabel")
+	Farm.progStatusLbl.Size = UDim2.new(1, 0, 0, 16)
+	Farm.progStatusLbl.Position = UDim2.fromOffset(0, 266)
+	Farm.progStatusLbl.BackgroundTransparency = 1
+	Farm.progStatusLbl.Font = Enum.Font.GothamBold
+	Farm.progStatusLbl.TextSize = 12
+	Farm.progStatusLbl.TextColor3 = Color3.fromRGB(255, 210, 90)
+	Farm.progStatusLbl.TextXAlignment = Enum.TextXAlignment.Left
+	Farm.progStatusLbl.Text = ""
+	Farm.progStatusLbl.Parent = frame
+
 	local note = Instance.new("TextLabel")
-	note.Size = UDim2.new(1, 0, 0, 120)
-	note.Position = UDim2.fromOffset(0, 168)
+	note.Size = UDim2.new(1, 0, 0, 110)
+	note.Position = UDim2.fromOffset(0, 292)
 	note.BackgroundTransparency = 1
 	note.Font = Enum.Font.Gotham
 	note.TextSize = 11
@@ -2067,6 +1844,7 @@ end
 function Farm.openPanel()
 	Farm.buildPanel()
 	Farm.refreshPanel()
+	Farm.refreshProgress()
 	if Farm.panelGui then
 		Farm.panelGui.Enabled = true
 	end
@@ -2084,13 +1862,11 @@ local function initAutoFarm()
 	Farm.ensureSettings()
 	Farm.acquireRemotes()
 	Farm.connectMatchEvents()
-	Farm.buildGui()
-	Farm.buildOverlay()
 	Farm.startTpLoop()
 	Farm.startActionLoop()
 	Farm.startMainLoop()
 	Farm.startPerfModes()
-	Farm.startOverlayLoops()
+	Farm.startProgressLoops()
 	Farm.startErrorLogger()
 	FeatureAPI.setAutoFarmEnabled = Farm.setEnabled
 	FeatureAPI.openAutoFarmPanel = Farm.openPanel

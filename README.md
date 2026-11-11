@@ -112,14 +112,16 @@ Inti suite di root repo, modul fitur di `modules/`:
   - `automation/auto-farm.lua` — Auto Farm: porting utuh
     farm v15 extreme (loop join -> farm Block-only ->
     post-match -> reset/respawn -> ulang, handler serve,
-    overlay progres level 15 + mirror console + error
-    logger ke file, klaim reward level + redeem kode
-    otomatis dengan alur respawn-first, mode Fast/Ultra
-    game). Panel dari Settings > VL Farm > Open: saklar
-    AUTO persisten — sekali ON, suite mengantrekan dirinya
-    lewat queue_on_teleport (gaya Infinite Yield), jadi
-    farm lanjut sendiri setelah rejoin/pindah server
-    tanpa autoexec.
+    klaim reward level + redeem kode otomatis dengan alur
+    respawn-first, error logger ke file, mode Fast/Ultra
+    game). TANPA HUD di layar: semua kontrol di panel
+    Settings > VL Farm > Open — saklar AUTO persisten
+    (sekali ON, suite mengantrekan dirinya lewat
+    queue_on_teleport gaya Infinite Yield, jadi farm
+    lanjut sendiri setelah rejoin/pindah server tanpa
+    autoexec), toggle manual TP/BALL/SPIKE/JUMP, kotak
+    interval Block, status, dan progres level 15 sebagai
+    teks.
 - `manifest.txt` — urutan penggabungan (inti dulu, lalu modul
   fitur sesuai urutan jalan).
 - `VERSION` — versi suite (naikkan saat rilis berarti).
