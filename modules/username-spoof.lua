@@ -6,8 +6,10 @@
 -- panel spectate, lobi, skor pertandingan, chat) dengan nama
 -- pilihan sendiri. CLIENT-SIDE saja: yang berubah hanya teks
 -- di layar sendiri; server dan pemain lain tetap melihat nama
--- asli. Nametag di atas kepala karakter digambar engine dari
--- Player.DisplayName, jadi tidak ikut berubah.
+-- asli. Nametag di atas kepala ikut diganti lewat
+-- Humanoid.DisplayName (properti yang dipakai renderer engine
+-- untuk nama di atas karakter, dan bisa ditulis lokal);
+-- diterapkan ulang tiap respawn dan dijaga sapuan berkala.
 --
 -- Mesinnya sapuan teks (text sweep): setiap TextLabel /
 -- TextButton di PlayerGui + CoreGui yang teksnya memuat nama
@@ -150,9 +152,28 @@ local function sweepRoot(root)
 	end
 end
 
+-- Nametag di atas kepala: renderer engine menggambarnya dari
+-- Humanoid.DisplayName. Properti itu bisa ditulis dari sisi
+-- klien, jadi nametag lokal ikut diganti. (Player.DisplayName
+-- sendiri read-only -- itu yang tidak bisa disentuh.)
+local function applyHumanoidName()
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		pcall(function()
+			hum.DisplayName = spoofName or realDisplay
+		end)
+	end
+end
+
 local function sweepAll()
 	for _, root in ipairs(roots) do
 		sweepRoot(root)
+	end
+	if spoofName then
+		-- Tegaskan lagi nametag tiap sapuan: menutup bila game
+		-- atau respawn mengembalikannya ke nama asli.
+		applyHumanoidName()
 	end
 end
 
@@ -182,6 +203,21 @@ local function startEngine()
 		if ok then
 			table.insert(rootConns, conn)
 		end
+	end
+	-- Karakter baru (respawn) membawa Humanoid baru dengan
+	-- nama asli; terapkan lagi nama spoof-nya.
+	local okChar, charConn = pcall(function()
+		return player.CharacterAdded:Connect(function(char)
+			local hum = char:WaitForChild("Humanoid", 5)
+			if hum and spoofName then
+				pcall(function()
+					hum.DisplayName = spoofName
+				end)
+			end
+		end)
+	end)
+	if okChar then
+		table.insert(rootConns, charConn)
 	end
 	sweepAll()
 	-- Sapuan berkala: menutup label yang teksnya berubah tanpa
@@ -262,6 +298,7 @@ end
 local function clearSpoof()
 	spoofName = nil
 	restoreAll()
+	applyHumanoidName() -- spoofName nil -> kembali ke nama asli
 	stopEngine()
 	S.settings[SETTING_MEMBER_USERNAME] = ""
 	saveLocal()
@@ -447,7 +484,7 @@ local function buildPanel()
 	note.TextColor3 = Color3.fromRGB(140, 140, 152)
 	note.TextXAlignment = Enum.TextXAlignment.Left
 	note.TextWrapped = true
-	note.Text = "Client-side saja: hanya tampilan di layarmu. Nametag di atas kepala tidak berubah."
+	note.Text = "Client-side saja: hanya tampilan di layarmu, termasuk nametag di atas kepala. Pemain lain tetap melihat nama asli."
 	note.Parent = frame
 
 	local function doApply()

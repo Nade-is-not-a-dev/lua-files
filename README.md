@@ -65,10 +65,11 @@ Inti suite di root repo, modul fitur di `modules/`:
   kartu, statistik, spectate, lobi, skor, chat) lewat sapuan
   teks: teks asli dicatat dan ditimpa, objek baru diawasi
   lewat DescendantAdded + penjaga perubahan Text + sapuan
-  berkala; Reset memulihkan semua teks persis. Client-side
-  saja; nametag di atas kepala (digambar engine) tidak
-  berubah. Nama tersimpan di simpanan lokal dan diterapkan
-  lagi otomatis saat masuk game.
+  berkala; Reset memulihkan semua teks persis. Nametag di
+  atas kepala ikut diganti lewat Humanoid.DisplayName
+  (diterapkan ulang tiap respawn). Client-side saja; pemain
+  lain tetap melihat nama asli. Nama tersimpan di simpanan
+  lokal dan diterapkan lagi otomatis saat masuk game.
 - `manifest.txt` — urutan penggabungan (inti dulu, lalu modul
   fitur sesuai urutan jalan).
 - `VERSION` — versi suite (naikkan saat rilis berarti).
