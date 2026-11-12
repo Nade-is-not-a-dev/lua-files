@@ -380,6 +380,10 @@ end
 -- yang tidak terbuka (opener nil-guarded).
 local AUTOMATION_URL = "https://nade-is-not-a-dev.github.io/vl-suite/vl-automation.lua"
 local function loadAutomationBundle()
+	if getgenv().VLDisableBundle then
+		print("[VL Suite] automation bundle skipped (VLDisableBundle test flag).")
+		return
+	end
 	if getgenv().VLAutomationLoaded then
 		return
 	end
