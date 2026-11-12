@@ -275,6 +275,178 @@ local function initScoreFx()
 	applyFavorites()
 	if not S.installedFx then
 		S.installedFx = true
+		-- MODE TARIK VISUAL (permintaan user 2026-11-12): untuk
+		-- efek skor PALSU berpengaruh fisik (mis. Supernova) pada
+		-- poin sendiri, tarikan dibuat visual murni. Karakter asli
+		-- TIDAK bergerak: constraint penggerak yang dipasang modul
+		-- efek ke HRP langsung dihancurkan saat muncul, jadi data
+		-- fisika yang terkirim ke server tetap diam di tempat.
+		-- Yang terlihat tertarik di layar sendiri adalah KLON
+		-- lokal karakter (instance lokal, tidak pernah
+		-- tereplikasi) yang digeser ke titik skor meniru
+		-- MaxVelocity efek asli; karakter asli disembunyikan
+		-- khusus di layar sendiri lewat LocalTransparencyModifier
+		-- (tidak tereplikasi). Pemain lain melihat karakter asli
+		-- diam, persis seperti data server.
+		local VisualPull = { active = false }
+		local RunServiceVP = game:GetService("RunService")
+		local MOVER_CLASSES = {
+			AlignPosition = true, AlignOrientation = true,
+			LinearVelocity = true, VectorForce = true,
+			BodyPosition = true, BodyVelocity = true,
+			BodyForce = true, BodyGyro = true,
+		}
+		function VisualPull.finish()
+			if not VisualPull.active then
+				return
+			end
+			VisualPull.active = false
+			for _, conn in ipairs(VisualPull.conns or {}) do
+				pcall(function()
+					conn:Disconnect()
+				end)
+			end
+			VisualPull.conns = nil
+			if VisualPull.clone then
+				pcall(function()
+					VisualPull.clone:Destroy()
+				end)
+				VisualPull.clone = nil
+			end
+			for part, v in pairs(VisualPull.ltm or {}) do
+				pcall(function()
+					part.LocalTransparencyModifier = v
+				end)
+			end
+			VisualPull.ltm = nil
+			for gui, v in pairs(VisualPull.guis or {}) do
+				pcall(function()
+					gui.Enabled = v
+				end)
+			end
+			VisualPull.guis = nil
+			for em, v in pairs(VisualPull.emitters or {}) do
+				pcall(function()
+					em.Enabled = v
+				end)
+			end
+			VisualPull.emitters = nil
+		end
+		function VisualPull.begin(origin)
+			if VisualPull.active then
+				return
+			end
+			local target
+			if typeof(origin) == "Vector3" then
+				target = origin
+			elseif typeof(origin) == "CFrame" then
+				target = origin.Position
+			else
+				return
+			end
+			local char = player.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			if not (char and hrp and hum) then
+				return
+			end
+			VisualPull.active = true
+			VisualPull.conns = {}
+			VisualPull.char = char
+			VisualPull.startPos = hrp.Position
+			VisualPull.target = target
+			local ok = pcall(function()
+				-- Klon lokal karakter pada pose saat ini.
+				char.Archivable = true
+				for _, d in ipairs(char:GetDescendants()) do
+					pcall(function()
+						d.Archivable = true
+					end)
+				end
+				local clone = char:Clone()
+				clone.Name = char.Name .. "_VisualPull"
+				for _, d in ipairs(clone:GetDescendants()) do
+					if d:IsA("Script") or d:IsA("LocalScript") then
+						d:Destroy()
+					elseif d:IsA("BasePart") then
+						d.Anchored = true
+						d.CanCollide = false
+						d.CanQuery = false
+						d.CanTouch = false
+					end
+				end
+				local cloneHum = clone:FindFirstChildOfClass("Humanoid")
+				if cloneHum then
+					cloneHum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+					cloneHum.HealthDisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+				end
+				clone.Parent = workspace
+				VisualPull.clone = clone
+				-- Sembunyikan karakter asli di layar sendiri saja.
+				VisualPull.ltm = {}
+				VisualPull.guis = {}
+				VisualPull.emitters = {}
+				for _, d in ipairs(char:GetDescendants()) do
+					if d:IsA("BasePart") then
+						VisualPull.ltm[d] = d.LocalTransparencyModifier
+						d.LocalTransparencyModifier = 1
+					elseif d:IsA("BillboardGui") then
+						VisualPull.guis[d] = d.Enabled
+						d.Enabled = false
+					elseif d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") then
+						VisualPull.emitters[d] = d.Enabled
+						d.Enabled = false
+					end
+				end
+				-- Penjaga: hancurkan penggerak apa pun yang modul
+				-- efek pasang ke karakter asli selama jendela ini.
+				table.insert(VisualPull.conns, hrp.DescendantAdded:Connect(function(inst)
+					if MOVER_CLASSES[inst.ClassName] then
+						local att = inst.Attachment0
+						inst:Destroy()
+						if att and att:IsA("Attachment") and att.Parent == hrp then
+							att:Destroy()
+						end
+					end
+				end))
+				-- Geser klon ke titik skor, maks 20 studs/detik
+				-- (meniru MaxVelocity AlignPosition efek asli).
+				table.insert(VisualPull.conns, RunServiceVP.Heartbeat:Connect(function(dt)
+					if not (VisualPull.active and VisualPull.clone and VisualPull.clone.Parent) then
+						return
+					end
+					local pivot = VisualPull.clone:GetPivot()
+					local delta = VisualPull.target - pivot.Position
+					local dist = delta.Magnitude
+					if dist > 0.05 then
+						local step = math.min(dist, 20 * dt)
+						local newPos = pivot.Position + delta.Unit * step
+						local rot = pivot - pivot.Position
+						VisualPull.clone:PivotTo(CFrame.new(newPos) * rot)
+					end
+				end))
+			end)
+			if not ok then
+				VisualPull.finish()
+				return
+			end
+			-- Pengawas: akhiri lebih awal bila game memindahkan
+			-- karakter asli (reset serve/respawn); jendela maks 2,8 d.
+			task.spawn(function()
+				local t0 = os.clock()
+				while VisualPull.active and os.clock() - t0 < 2.8 do
+					if player.Character ~= char then
+						break
+					end
+					local h = char:FindFirstChild("HumanoidRootPart")
+					if not h or (h.Position - VisualPull.startPos).Magnitude > 12 then
+						break
+					end
+					task.wait(0.2)
+				end
+				VisualPull.finish()
+			end)
+		end
 	-- Score FX dibungkus di satu corong yang sama (semua pemutaran
 	-- efek skor lewat EffectController.PlayScoreEffect):
 	-- 1) SPOOF: untuk poin milik pemain lokal sendiri saat bermain
@@ -283,6 +455,9 @@ local function initScoreFx()
 	-- 2) GERBANG FISIK: bila saklar World-Affecting mati, efek dari
 	--    daftar WORLD_AFFECTING_FX (dinilai dari item FINAL setelah
 	--    penukaran) tidak dimainkan sama sekali di client ini.
+	--    Bila saklar MENYALA dan efeknya hasil penukaran (palsu),
+	--    efek dimainkan penuh tetapi tarikannya visual murni
+	--    lewat VisualPull di atas: karakter asli tidak bergerak.
 	-- Replay tidak disentuh oleh keduanya.
 	if EffectController and EffectController.PlayScoreEffect then
 		pcall(function()
@@ -299,6 +474,7 @@ local function initScoreFx()
 					-- Saklar mati: pool Random menyingkirkan efek
 					-- berpengaruh fisik agar poin tetap menampilkan
 					-- sesuatu; efek spesifik dinilai gerbang di bawah.
+					local spoofedWorldFx = false
 					local resolvedId = gateOff
 						and resolveScoreFxItemIdExcludingWorld()
 						or resolveScoreFxItemId()
@@ -307,6 +483,9 @@ local function initScoreFx()
 						if item and not (gateOff and WORLD_AFFECTING_FX[resolvedId]) then
 							data = table.clone(data)
 							data.Item = item
+							if WORLD_AFFECTING_FX[resolvedId] then
+								spoofedWorldFx = true
+							end
 							-- Suara poin mengikuti efek spoof (suara
 							-- terdaftar game berasal dari efek server/
 							-- pembawa, yang dipilih hening).
@@ -319,6 +498,9 @@ local function initScoreFx()
 					and isLocalInGame() then
 					return function() end
 				end
+			end
+			if spoofedWorldFx then
+				VisualPull.begin(data.Origin)
 			end
 			return originalPlayScoreEffect(self, data)
 		end
