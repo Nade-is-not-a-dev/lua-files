@@ -102,9 +102,6 @@ local SETTING_MEMBER_EXTREME = "ExtremeUltraFastMode"
 local SETTINGS_KEY_EXTREME = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_EXTREME
 local SETTING_MEMBER_SHIFTLOCK = "AutoShiftlock"
 local SETTINGS_KEY_SHIFTLOCK = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_SHIFTLOCK
--- Username Spoofer: BUKAN kunci Settings game (tidak ada saklar
--- grupnya); nilainya hanya hidup di simpanan lokal S.settings.
-local SETTING_MEMBER_USERNAME = "UsernameSpoof"
 -- Stats Spoofer: sama, hanya hidup di simpanan lokal; isinya
 -- tabel {namaField = angka} untuk field yang di-spoof saja.
 local SETTING_MEMBER_STATS = "StatsSpoof"
@@ -160,11 +157,10 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, UsernameSpoof = "", StatsSpoof = {}, AutoFarm = false }, -- saklar bagian Settings tambahan + spoof nama/statistik + farm
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, StatsSpoof = {}, AutoFarm = false }, -- saklar bagian Settings tambahan + spoof nama/statistik + farm
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
-		usernameSettingsRowBuilt = false,
 		statsSettingsRowBuilt = false,
 		farmSettingsRowBuilt = false,
 		installed = false,
@@ -306,10 +302,6 @@ local function loadLocal()
 				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_SHIFTLOCK]) == "boolean" then
 					S.settings[SETTING_MEMBER_SHIFTLOCK] = data.settings[SETTING_MEMBER_SHIFTLOCK]
-				end
-				if type(data.settings) == "table"
-					and type(data.settings[SETTING_MEMBER_USERNAME]) == "string" then
-					S.settings[SETTING_MEMBER_USERNAME] = data.settings[SETTING_MEMBER_USERNAME]
 				end
 				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_STATS]) == "table" then

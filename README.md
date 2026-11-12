@@ -36,8 +36,7 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `modules/settings.lua` — modul fitur: grup VL Settings
   (saklar World-Affecting Score FX + halaman grup) dan baris
   Settings Avatar Lite (tombol Open-nya nil-guarded sampai
-  modul avatar kembali) + baris Settings Username Spoofer
-  (pola baris yang sama, membuka panel modul username-spoof)
+  modul avatar kembali)
   + baris Settings Stats Spoofer (pola yang sama lagi,
   membuka panel modul stats-spoof) + baris Settings Auto
   Farm (pola yang sama lagi, membuka panel bundle
@@ -62,20 +61,6 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `modules/auto-shiftlock.lua` — putar karakter menghadap
   kamera saat lompat + Redirection/Boom Jump (dulu
   "Face Camera"); tidak menunggu feature-shared.
-- `modules/username-spoof.lua` — modul fitur: Username
-  Spoofer. Panel (dibuka dari Settings > VL Username > Open)
-  berisi TextBox + tombol Apply yang merupakan klon kotak
-  redeem code bawaan game (Shop > Codes > EnterBox /
-  EnterButton). Nama yang ditulis menggantikan username +
-  display name lokal di seluruh permukaan GUI (leaderboard,
-  kartu, statistik, spectate, lobi, skor, chat) lewat sapuan
-  teks: teks asli dicatat dan ditimpa, objek baru diawasi
-  lewat DescendantAdded + penjaga perubahan Text + sapuan
-  berkala; Reset memulihkan semua teks persis. Nametag di
-  atas kepala ikut diganti lewat Humanoid.DisplayName
-  (diterapkan ulang tiap respawn). Client-side saja; pemain
-  lain tetap melihat nama asli. Nama tersimpan di simpanan
-  lokal dan diterapkan lagi otomatis saat masuk game.
 - `modules/stats-spoof.lua` — modul fitur: Stats Spoofer.
   Panel (dibuka dari Settings > VL Stats > Open) berisi 10
   kotak angka: Wins, Losses, MVPs, Games, Points, Spikes,

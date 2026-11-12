@@ -216,87 +216,8 @@ local function buildAvatarSettingsRow()
 	end
 end
 
--- Baris tombol Username Spoofer di daftar utama Settings,
--- pola yang sama persis dengan baris Avatar Lite di atas:
--- header BB_TextLabel + baris B_Template dengan tombol Open.
--- Tombolnya membuka panel modul username-spoof (nil-guarded
--- lewat getgenv sampai modul itu selesai init).
-local function buildUsernameSettingsRow()
-	if S.usernameSettingsRowBuilt then
-		return
-	end
-	local function findList()
-		local ok, found = pcall(function()
-			return InterfaceController.App.Lobby.Settings.BGFrame.Body.List
-		end)
-		if ok and found then
-			return found
-		end
-		local ok, found = pcall(function()
-			local app = player.PlayerGui:FindFirstChild("App")
-			local lobby = app and app:FindFirstChild("Lobby")
-			local settings = lobby and lobby:FindFirstChild("Settings")
-			local bg = settings and settings:FindFirstChild("BGFrame")
-			local body = bg and bg:FindFirstChild("Body")
-			return body and body:FindFirstChild("List")
-		end)
-		if ok and found then
-			return found
-		end
-		return nil
-	end
-	local deadline = os.clock() + 120
-	local list
-	while os.clock() < deadline do
-		list = findList()
-		if list then
-			break
-		end
-		task.wait(0.5)
-	end
-	if not list then
-		warn("[VL Suite] Username settings list not found; row not built.")
-		return
-	end
-	if list:FindFirstChild("B_VLUsernameRow") then
-		S.usernameSettingsRowBuilt = true
-		return
-	end
-	local okBuild, err = pcall(function()
-		local Fusion = require(RS:WaitForChild("Packages"):WaitForChild("Fusion"))
-		local Button = require(ReplicatedFirst:WaitForChild("Components"):WaitForChild("Button"))
-		Fusion.Hydrate(list.BB_TextLabel:Clone())({
-			["Name"] = "B_VLUsernameLabel",
-			["Text"] = "VL Username",
-			["Visible"] = true,
-			["Parent"] = list,
-		})
-		local row = Fusion.Hydrate(list.B_Template:Clone())({
-			["Name"] = "B_VLUsernameRow",
-			["Visible"] = true,
-			["Parent"] = list,
-		})
-		row.Setting.Text = "Username Spoofer"
-		row.ImageButton.KeyCode.Text = "Open"
-		Button(row.ImageButton)({
-			["OnActivated"] = function()
-				local opener = getgenv().VLUsernameOpenPanel
-				if opener then
-					pcall(opener)
-				end
-			end,
-		})
-	end)
-	if okBuild then
-		S.usernameSettingsRowBuilt = true
-		print("[VL Suite] Username settings row built (Settings > VL Username > Open).")
-	else
-		warn("[VL Suite] Username settings row failed: " .. tostring(err))
-	end
-end
-
 -- Baris tombol Stats Spoofer di daftar utama Settings, pola
--- yang sama dengan baris Avatar Lite / Username Spoofer:
+-- yang sama dengan baris Avatar Lite:
 -- header BB_TextLabel + baris B_Template dengan tombol Open
 -- yang membuka panel modul stats-spoof (nil-guarded).
 local function buildStatsSettingsRow()
@@ -539,7 +460,6 @@ local function initSettings()
 	applyVLSettings()
 	task.spawn(buildSettingsSection)
 	task.spawn(buildAvatarSettingsRow)
-	task.spawn(buildUsernameSettingsRow)
 	task.spawn(buildStatsSettingsRow)
 	task.spawn(buildFarmSettingsRow)
 	loadAutomationBundle()

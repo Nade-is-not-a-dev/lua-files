@@ -40,7 +40,7 @@
 -- lokal (S.settings kunci StatsSpoof) dan diterapkan lagi
 -- otomatis saat masuk game.
 --
--- Berbeda dengan username-spoof, fitur ini DIGERBANG Extreme
+-- Fitur ini DIGERBANG Extreme
 -- Ultra Fast Mode (S.extremeFast): saat Extreme menyala,
 -- statistik asli tampil lagi (reconcile berkala yang
 -- menegakkannya), sesuai desain "semua spoof mati" milik
