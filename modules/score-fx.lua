@@ -430,19 +430,34 @@ local function initScoreFx()
 				VisualPull.finish()
 				return
 			end
-			-- Pengawas: akhiri lebih awal bila game memindahkan
-			-- karakter asli (reset serve/respawn); jendela maks 2,8 d.
+			-- Pengawas: mode visual WAJIB selesai begitu game
+			-- me-teleport pemain ke sisi lapangannya untuk serve
+			-- berikutnya, agar karakter asli langsung tampil lagi
+			-- di posisi barunya dan bisa digerakkan normal.
+			-- Teleport dideteksi sebagai lompatan posisi seketika
+			-- > 4 studs antar-cek (penggerak efek sudah diblokir,
+			-- jadi lompatan hanya bisa berasal dari game), dicek
+			-- tiap 0,1 d; respawn dan batas jendela 2,8 d juga
+			-- mengakhiri mode.
 			task.spawn(function()
 				local t0 = os.clock()
+				local lastPos = VisualPull.startPos
 				while VisualPull.active and os.clock() - t0 < 2.8 do
 					if player.Character ~= char then
 						break
 					end
 					local h = char:FindFirstChild("HumanoidRootPart")
-					if not h or (h.Position - VisualPull.startPos).Magnitude > 12 then
+					if not h then
 						break
 					end
-					task.wait(0.2)
+					if (h.Position - lastPos).Magnitude > 4 then
+						break
+					end
+					if (h.Position - VisualPull.startPos).Magnitude > 12 then
+						break
+					end
+					lastPos = h.Position
+					task.wait(0.1)
 				end
 				VisualPull.finish()
 			end)
