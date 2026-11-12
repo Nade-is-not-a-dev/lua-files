@@ -40,7 +40,7 @@
 -- lokal (S.settings kunci StatsSpoof) dan diterapkan lagi
 -- otomatis saat masuk game.
 --
--- Fitur ini DIGERBANG Extreme
+-- Berbeda dengan username-spoof, fitur ini DIGERBANG Extreme
 -- Ultra Fast Mode (S.extremeFast): saat Extreme menyala,
 -- statistik asli tampil lagi (reconcile berkala yang
 -- menegakkannya), sesuai desain "semua spoof mati" milik
@@ -698,11 +698,6 @@ function Stats.openPanel()
 end
 
 local function initStatsSpoof()
-	if getgenv().VLDisableStats then
-		print("[VL Suite] stats-spoof skipped (VLDisableStats test flag).")
-		suiteModuleLoaded("stats-spoof")
-		return
-	end
 	local t0 = os.clock()
 	if not awaitFeatureShared(90) then
 		warn("[VL Suite] stats-spoof skipped: feature-shared not ready.")

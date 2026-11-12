@@ -6,7 +6,6 @@ on:
       - "core.lua"
       - "feature-shared.lua"
       - "modules/**"
-      - "automation/**"
       - "build.py"
       - "manifest.txt"
       - "VERSION"
@@ -35,18 +34,11 @@ jobs:
       - name: Build combined file
         run: python3 build.py
 
-      - name: Build automation bundle (obfuscated)
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq lua5.1 > /dev/null
-          git clone --depth 1 https://github.com/prometheus-lua/Prometheus.git /tmp/prometheus
-          LUA51=lua5.1 PROMETHEUS=/tmp/prometheus bash automation/build-automation.sh
-
       - name: Syntax check (luau-compile)
         run: |
           curl -sSL -o /tmp/luau.zip https://github.com/luau-lang/luau/releases/download/0.746/luau-ubuntu.zip
           unzip -o /tmp/luau.zip -d /tmp/luau
           /tmp/luau/luau-compile dist/vl-suite.lua > /dev/null
-          /tmp/luau/luau-compile dist/vl-automation.lua > /dev/null
           echo "luau-compile OK"
 
       - name: Upload Pages artifact

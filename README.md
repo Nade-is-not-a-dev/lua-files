@@ -36,13 +36,10 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `modules/settings.lua` — modul fitur: grup VL Settings
   (saklar World-Affecting Score FX + halaman grup) dan baris
   Settings Avatar Lite (tombol Open-nya nil-guarded sampai
-  modul avatar kembali)
+  modul avatar kembali) + baris Settings Username Spoofer
+  (pola baris yang sama, membuka panel modul username-spoof)
   + baris Settings Stats Spoofer (pola yang sama lagi,
-  membuka panel modul stats-spoof) + baris Settings Auto
-  Farm (pola yang sama lagi, membuka panel bundle
-  otomatisasi) + pemuat bundle otomatisasi: fetch
-  `vl-automation.lua` dari Pages saat runtime (anti-cache,
-  nil-guarded; gagal fetch tidak fatal).
+  membuka panel modul stats-spoof).
 - `modules/player-card.lua` — modul fitur: spoof kartu
   pemain (resolver kartu tampil + DisplayFlashCard).
 - `modules/jersey.lua` — modul fitur: spoof jersey
@@ -61,6 +58,20 @@ Inti suite di root repo, modul fitur di `modules/`:
 - `modules/auto-shiftlock.lua` — putar karakter menghadap
   kamera saat lompat + Redirection/Boom Jump (dulu
   "Face Camera"); tidak menunggu feature-shared.
+- `modules/username-spoof.lua` — modul fitur: Username
+  Spoofer. Panel (dibuka dari Settings > VL Username > Open)
+  berisi TextBox + tombol Apply yang merupakan klon kotak
+  redeem code bawaan game (Shop > Codes > EnterBox /
+  EnterButton). Nama yang ditulis menggantikan username +
+  display name lokal di seluruh permukaan GUI (leaderboard,
+  kartu, statistik, spectate, lobi, skor, chat) lewat sapuan
+  teks: teks asli dicatat dan ditimpa, objek baru diawasi
+  lewat DescendantAdded + penjaga perubahan Text + sapuan
+  berkala; Reset memulihkan semua teks persis. Nametag di
+  atas kepala ikut diganti lewat Humanoid.DisplayName
+  (diterapkan ulang tiap respawn). Client-side saja; pemain
+  lain tetap melihat nama asli. Nama tersimpan di simpanan
+  lokal dan diterapkan lagi otomatis saat masuk game.
 - `modules/stats-spoof.lua` — modul fitur: Stats Spoofer.
   Panel (dibuka dari Settings > VL Stats > Open) berisi 10
   kotak angka: Wins, Losses, MVPs, Games, Points, Spikes,
@@ -82,31 +93,6 @@ Inti suite di root repo, modul fitur di `modules/`:
   reconcile berkala (statistik = spoof, bukan alat bantu).
   Nilai tersimpan di simpanan lokal (StatsSpoof) dan
   diterapkan lagi otomatis saat masuk game.
-- `automation/` — bundle otomatisasi, SENGAJA di luar
-  penggabungan suite: fitur berat yang berjalan sendiri,
-  diterbitkan sebagai file terpisah `dist/vl-automation.lua`
-  yang DI-OBFUSCATE (Prometheus, config light:
-  `automation/obfuscate-config.lua`; langkah build:
-  `automation/build-automation.sh`) dan dimuat suite saat
-  runtime. Karena di-obfuscate terpisah, semua kebutuhan
-  bersamanya diambil dari bridge `getgenv().VLBridge` yang
-  diterbitkan `feature-shared.lua` (state S, saveLocal,
-  loadLocal, Knit, FeatureAPI, konstanta settings) — bukan
-  dari local chunk suite. Modul suite lain TIDAK ikut
-  di-obfuscate.
-  - `automation/auto-farm.lua` — Auto Farm: porting utuh
-    farm v15 extreme (loop join -> farm Block-only ->
-    post-match -> reset/respawn -> ulang, handler serve,
-    klaim reward level + redeem kode otomatis dengan alur
-    respawn-first, error logger ke file, mode Fast/Ultra
-    game). TANPA HUD di layar: semua kontrol di panel
-    Settings > VL Farm > Open — saklar AUTO persisten
-    (sekali ON, suite mengantrekan dirinya lewat
-    queue_on_teleport gaya Infinite Yield, jadi farm
-    lanjut sendiri setelah rejoin/pindah server tanpa
-    autoexec), toggle manual TP/BALL/SPIKE/JUMP, kotak
-    interval Block, status, dan progres level 15 sebagai
-    teks.
 - `manifest.txt` — urutan penggabungan (inti dulu, lalu modul
   fitur sesuai urutan jalan).
 - `VERSION` — versi suite (naikkan saat rilis berarti).
@@ -121,10 +107,7 @@ Push yang menyentuh inti/modul -> workflow build -> cek
 sintaks luau -> terbit ke GitHub Pages (`dist/vl-suite.lua`).
 Header file hasil build memuat versi + commit + tanggal, dan
 tercetak ke konsol saat script jalan, jadi versi yang aktif
-selalu bisa diverifikasi. Push yang menyentuh `automation/`
-ikut memicu workflow: bundle otomatisasi di-obfuscate dengan
-Prometheus lalu diterbitkan di sampingnya sebagai
-`dist/vl-automation.lua` (cek sintaks luau berlaku juga).
+selalu bisa diverifikasi.
 
 ## Konvensi
 

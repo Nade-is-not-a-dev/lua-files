@@ -102,13 +102,12 @@ local SETTING_MEMBER_EXTREME = "ExtremeUltraFastMode"
 local SETTINGS_KEY_EXTREME = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_EXTREME
 local SETTING_MEMBER_SHIFTLOCK = "AutoShiftlock"
 local SETTINGS_KEY_SHIFTLOCK = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_SHIFTLOCK
+-- Username Spoofer: BUKAN kunci Settings game (tidak ada saklar
+-- grupnya); nilainya hanya hidup di simpanan lokal S.settings.
+local SETTING_MEMBER_USERNAME = "UsernameSpoof"
 -- Stats Spoofer: sama, hanya hidup di simpanan lokal; isinya
 -- tabel {namaField = angka} untuk field yang di-spoof saja.
 local SETTING_MEMBER_STATS = "StatsSpoof"
--- Auto Farm (v15): sama, hanya hidup di simpanan lokal; boolean
--- saklar loop AUTO. Loop dijalankan modul farm; persistensi ini
--- yang membuatnya lanjut sendiri setelah rejoin (auto-attach).
-local SETTING_MEMBER_FARM = "AutoFarm"
 -- Avatar Lite TIDAK lagi jadi anggota grup: anggota grup selalu
 -- dirender game sebagai saklar. Sebagai gantinya panel dibuka dari
 -- baris tombol khusus di daftar utama Settings (pola yang sama
@@ -157,10 +156,11 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, StatsSpoof = {}, AutoFarm = false }, -- saklar bagian Settings tambahan + spoof nama/statistik + farm
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, UsernameSpoof = "", StatsSpoof = {} }, -- saklar bagian Settings tambahan + spoof nama/statistik
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
+		usernameSettingsRowBuilt = false,
 		statsSettingsRowBuilt = false,
 		farmSettingsRowBuilt = false,
 		installed = false,
@@ -304,6 +304,10 @@ local function loadLocal()
 					S.settings[SETTING_MEMBER_SHIFTLOCK] = data.settings[SETTING_MEMBER_SHIFTLOCK]
 				end
 				if type(data.settings) == "table"
+					and type(data.settings[SETTING_MEMBER_USERNAME]) == "string" then
+					S.settings[SETTING_MEMBER_USERNAME] = data.settings[SETTING_MEMBER_USERNAME]
+				end
+				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_STATS]) == "table" then
 					local cleanStats = {}
 					for _, field in ipairs({ "Wins", "Losses", "MVPs", "Games", "Points", "Spikes", "Blocks", "Aces", "Saves", "Elo" }) do
@@ -313,10 +317,6 @@ local function loadLocal()
 						end
 					end
 					S.settings[SETTING_MEMBER_STATS] = cleanStats
-				end
-				if type(data.settings) == "table"
-					and type(data.settings[SETTING_MEMBER_FARM]) == "boolean" then
-					S.settings[SETTING_MEMBER_FARM] = data.settings[SETTING_MEMBER_FARM]
 				end
 				if isScoreFx(data.fx)
 					and (not S.realOwned[data.fx] or data.fx == RANDOM_FX_ID) then
@@ -766,24 +766,6 @@ local function initFeatureShared()
 		task.wait(0.1)
 	end
 	refreshServerTruth()
-	-- Bridge untuk bundle otomatisasi (auto farm + auto spin):
-	-- file terpisah yang di-obfuscate dan dimuat saat runtime,
-	-- jadi ia tidak bisa memakai local chunk suite. Semua yang
-	-- ia butuhkan diterbitkan di sini, sekali, lewat getgenv.
-	getgenv().VLBridge = {
-		S = S,
-		saveLocal = saveLocal,
-		loadLocal = loadLocal,
-		awaitFeatureShared = awaitFeatureShared,
-		FeatureAPI = FeatureAPI,
-		Knit = Knit,
-		ContentItem = ContentItem,
-		player = player,
-		RS = RS,
-		ReplicatedFirst = ReplicatedFirst,
-		CollectionService = CollectionService,
-		SETTING_MEMBER_FARM = SETTING_MEMBER_FARM,
-	}
 	FeatureSharedReady = true
 	print(("[VL Suite] feature-shared ready in %.2fs"):format(os.clock() - t0))
 	suiteModuleLoaded("feature-shared")
