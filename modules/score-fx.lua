@@ -480,6 +480,10 @@ local function initScoreFx()
 		end)
 		local originalPlayScoreEffect = EffectController.PlayScoreEffect
 		EffectController.PlayScoreEffect = function(self, data)
+			-- Dicatat bila data diganti jadi efek berpengaruh fisik:
+			-- dibaca di akhir wrapper (jadi dideklarasi di sini,
+			-- bukan di dalam blok karakter sendiri).
+			local spoofedWorldFx = false
 			if S.extremeFast then
 				return originalPlayScoreEffect(self, data)
 			end
@@ -489,7 +493,6 @@ local function initScoreFx()
 					-- Saklar mati: pool Random menyingkirkan efek
 					-- berpengaruh fisik agar poin tetap menampilkan
 					-- sesuatu; efek spesifik dinilai gerbang di bawah.
-					local spoofedWorldFx = false
 					local resolvedId = gateOff
 						and resolveScoreFxItemIdExcludingWorld()
 						or resolveScoreFxItemId()
