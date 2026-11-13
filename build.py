@@ -70,9 +70,24 @@ def main():
             return 1
         src = read(path).rstrip() + "\n"
         total += len(src)
-        parts.append(
-            f"\n-- ===== module: {entry} =====\n" + src
-        )
+        if entry.startswith("modules/"):
+            # Bungkus modul fitur dalam blok do..end: local top-level
+            # modul jadi block-scoped dan TIDAK menyumbang register
+            # chunk selamanya (chunk tunggal + 14 modul bisa
+            # melampaui batas ~200 local per fungsi compiler executor
+            # -> "Out of local registers"). Semua komunikasi antar
+            # modul lewat FeatureAPI/local core+feature-shared yang
+            # tetap di level chunk.
+            parts.append(
+                f"\n-- ===== module: {entry} =====\n"
+                "do -- scope modul (batas register chunk)\n"
+                + src
+                + "end -- scope modul\n"
+            )
+        else:
+            parts.append(
+                f"\n-- ===== module: {entry} =====\n" + src
+            )
 
     parts.append(
         "\n-- ===== end of modules =====\n"

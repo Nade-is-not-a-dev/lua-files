@@ -33,6 +33,14 @@ loadstring(game:HttpGet("https://nade-is-not-a-dev.github.io/vl-suite/vl-suite.l
 1. **Satu chunk.** Semua file digabung jadi SATU chunk Lua:
    - Top-level `local` di file A terlihat oleh file yang
      DITANGKIS lewat manifest.
+   - Modul fitur (`modules/*`) dibungkus `do .. end` oleh
+     `build.py` saat digabung — local top-level modul tidak
+     menyumbang register chunk. Alasannya: batas compiler
+     executor ±200 local register per fungsi (termasuk chunk);
+     tanpa itu build bisa gagal dengan "Out of local registers".
+     Konsekuensinya: komunikasi antar modul WAJIB lewat
+     `FeatureAPI` / local `core.lua`+`feature-shared.lua` yang
+     tetap di level chunk.
    - Konsekuensi bug klasik: identifier dideklarasikan `local`
      di file TERAKHIR tapi dipakai di file LEBIH AWAL dikompilasi
      sebagai global (nil saat runtime). Pernah kejadian dua kali
