@@ -67,6 +67,13 @@ Inti suite di root repo, modul fitur di `modules/`:
   dalam jangkauan & sisi tim sendiri, biru = belum); kotak debug
   hitbox game di karakter TIDAK dinyalakan. Bukan kategori
   inventory.
+- `modules/auto-receive.lua` — modul fitur: Auto Receive
+  (saklar di grup VL Settings). Tiap Heartbeat menyimulasi
+  lintasan bola (gravitasi 17) ke arah karakter; bila bola akan
+  berada dalam jangkauan (12 stud) dalam <= 0.25 s dan karakter
+  di tanah, picu GameController:DoMove("Bump") -- jalur resmi
+  game (Orchestrator + gerbang canInteract tetap jalan), dengan
+  cooldown lokal dan skip bola terakhir sendiri (LastHitter).
 - `modules/username-spoof.lua` — modul fitur: Username
   Spoofer. Panel (dibuka dari Settings > VL Username > Open)
   berisi TextBox + tombol Apply yang merupakan klon kotak

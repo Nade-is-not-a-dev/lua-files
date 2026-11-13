@@ -147,6 +147,14 @@ tidak ada kode server; Knit *service* diverifikasi lewat callsite).
   (warna dari `isPointOnTeamSide` + `DistanceFromCharacter`).
 - Timer: `DefaultHitboxDuration = 0.3` s; Block/JumpSet juga
   berhenti saat `States.IsJumping` false.
+- Jalur pemicu move: tombol → `Binding/Registry/DoMove.lua`
+  (`onMoveRequest` + `canDoMove`) →
+  `GameController:DoMove{ActionName, InputState, IsAerial,
+  Metadata}` (`DoMove/_source.lua` → Orchestrator). Nama action
+  di `Configuration/Actions.lua` (`Bump` ground, `Spike`/`Block`/
+  `JumpSet` aerial, `Set`, `Dive`). Modul auto-receive memicu
+  `DoMove("Bump")` langsung dengan prediksi lintasan bola
+  (gravitasi 17).
 - Gerbang lain: `isBallInNetBoundary` (bola harus di area net),
   `isHitboxSkipped` (blokir self-hit), `isMoveInvalidOnServe`.
 
@@ -176,7 +184,8 @@ tidak ada kode server; Knit *service* diverifikasi lewat callsite).
 - Kunci komposit suite: `VLSettings_<Member>` di Value
   `InterfaceController.Settings`; anggota saat ini:
   `WorldAffectingScoreFX`, `ExtremeUltraFastMode`,
-  `AutoShiftlock`, `HitboxExpander`. `ChangeSetting` kunci milik
+  `AutoShiftlock`, `HitboxExpander`, `AutoReceive`. `ChangeSetting`
+  kunci milik
   suite ditangani lokal di wrapper `modules/settings.lua`
   (server tidak mengenal kunci komposit; bila bocor ke server
   jadi baris raw-key di halaman utama).

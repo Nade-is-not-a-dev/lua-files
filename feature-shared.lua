@@ -106,6 +106,9 @@ local SETTINGS_KEY_SHIFTLOCK = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_SHIFTLOCK
 -- S.hitboxScale (angka; 1 = ukuran asli, dibatasi 1..3).
 local SETTING_MEMBER_HITBOX = "HitboxExpander"
 local SETTINGS_KEY_HITBOX = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_HITBOX
+-- Auto Receive: saklar grup (persisten).
+local SETTING_MEMBER_AUTO_RECEIVE = "AutoReceive"
+local SETTINGS_KEY_AUTO_RECEIVE = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_AUTO_RECEIVE
 -- Username Spoofer: BUKAN kunci Settings game (tidak ada saklar
 -- grupnya); nilainya hanya hidup di simpanan lokal S.settings.
 local SETTING_MEMBER_USERNAME = "UsernameSpoof"
@@ -160,7 +163,7 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, HitboxExpander = false, UsernameSpoof = "", StatsSpoof = {} }, -- saklar bagian Settings tambahan + spoof nama/statistik
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, HitboxExpander = false, AutoReceive = false, UsernameSpoof = "", StatsSpoof = {} }, -- saklar bagian Settings tambahan + spoof nama/statistik
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
@@ -312,6 +315,10 @@ local function loadLocal()
 				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_HITBOX]) == "boolean" then
 					S.settings[SETTING_MEMBER_HITBOX] = data.settings[SETTING_MEMBER_HITBOX]
+				end
+				if type(data.settings) == "table"
+					and type(data.settings[SETTING_MEMBER_AUTO_RECEIVE]) == "boolean" then
+					S.settings[SETTING_MEMBER_AUTO_RECEIVE] = data.settings[SETTING_MEMBER_AUTO_RECEIVE]
 				end
 				if type(data.hitboxScale) == "number" then
 					local v = data.hitboxScale
