@@ -59,8 +59,12 @@ local RING_COLOR_OK = Color3.fromRGB(90, 255, 130)
 local RING_COLOR_FAR = Color3.fromRGB(120, 175, 255)
 local RunService = game:GetService("RunService")
 
+-- Koneksi cincin disimpan di S (getgenv) supaya lintas re-run
+-- script dalam satu sesi game: instance baru bisa menghentikan
+-- koneksi yang dipasang instance lama (jebakan guard getgenv).
+local RING_CONNS = "_ringConns"
+
 local ringParts = {} -- [instansi bola] = part cincin
-local ringHeartbeatConn, ringAddedConn, ringRemovedConn
 local Physics -- Common.Physics milik game (diisi saat init)
 
 local function removeRing(ball)
@@ -127,45 +131,59 @@ local function ringHeartbeat()
 	end
 end
 
+local function stopRing()
+	local conns = S[RING_CONNS]
+	if conns then
+		S[RING_CONNS] = nil
+		for _, conn in ipairs(conns) do
+			pcall(function()
+				conn:Disconnect()
+			end)
+		end
+	end
+	-- Sapuan jaring pengaman: hancurkan SEMUA cincin yang masih
+	-- tertempel (dari instance script mana pun).
+	pcall(function()
+		for _, d in ipairs(workspace:GetDescendants()) do
+			if d.Name == "VLHitboxRing" then
+				d:Destroy()
+			end
+		end
+	end)
+	ringParts = {}
+end
+
 local function startRing()
-	if ringHeartbeatConn then
+	if S[RING_CONNS] then
 		return
 	end
+	-- Bersihkan sisa cincin instance lama dulu (jika ada).
+	pcall(function()
+		for _, d in ipairs(workspace:GetDescendants()) do
+			if d.Name == "VLHitboxRing" then
+				d:Destroy()
+			end
+		end
+	end)
+	ringParts = {}
+	local conns = {}
 	-- Bola yang sudah ada + bola yang muncul belakangan.
 	for _, ball in ipairs(CollectionService:GetTagged("Ball")) do
 		ensureRing(ball)
 	end
-	ringAddedConn = CollectionService:GetInstanceAddedSignal("Ball"):Connect(ensureRing)
-	ringRemovedConn = CollectionService:GetInstanceRemovedSignal("Ball"):Connect(removeRing)
-	ringHeartbeatConn = RunService.Heartbeat:Connect(ringHeartbeat)
-end
-
-local function stopRing()
-	if ringHeartbeatConn then
-		ringHeartbeatConn:Disconnect()
-		ringHeartbeatConn = nil
-	end
-	if ringAddedConn then
-		ringAddedConn:Disconnect()
-		ringAddedConn = nil
-	end
-	if ringRemovedConn then
-		ringRemovedConn:Disconnect()
-		ringRemovedConn = nil
-	end
-	for ball in pairs(ringParts) do
-		removeRing(ball)
-	end
+	table.insert(conns, CollectionService:GetInstanceAddedSignal("Ball"):Connect(ensureRing))
+	table.insert(conns, CollectionService:GetInstanceRemovedSignal("Ball"):Connect(removeRing))
+	table.insert(conns, RunService.Heartbeat:Connect(ringHeartbeat))
+	S[RING_CONNS] = conns
 end
 
 local function initHitboxExpander()
 	local t0 = os.clock()
-	if getgenv().VLHitboxExpanderInstalled then
-		suiteModuleLoaded("hitbox-expander")
-		return
-	end
-	getgenv().VLHitboxExpanderInstalled = true
-	-- Tunggu state lokal selesai dimuat (saklar awal + skala).
+	-- RE-RUN SAFE: jangan skip penuh. Fungsi FeatureAPI dari
+	-- instance lama mati bersama localnya; daftarkan ulang dan
+	-- terapkan ulang state tersimpan. Yang benar-benar sekali
+	-- saja hanya bungkus ClientHitbox.new (guard
+	-- S.installedHitboxWrap).
 	local deadline = t0 + 30
 	while not LocalStateLoaded and os.clock() < deadline do
 		task.wait(0.25)
@@ -235,10 +253,9 @@ local function initHitboxExpander()
 	-- path tidak menggagalkan modul lain.
 	pcall(installWrap)
 
-	-- Terapkan keadaan awal dari saklar tersimpan.
-	if S.localStateLoaded then
-		FeatureAPI.setHitboxExpanderEnabled(S.settings[SETTING_MEMBER_HITBOX] == true)
-	end
+	-- Terapkan keadaan awal dari saklar tersimpan (idempoten;
+	-- start/stop dibedakan lewat koneksi yang disimpan di S).
+	FeatureAPI.setHitboxExpanderEnabled(S.settings[SETTING_MEMBER_HITBOX] == true)
 
 	print(("[VL Suite] hitbox-expander ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, sharedWait))
 	suiteModuleLoaded("hitbox-expander")

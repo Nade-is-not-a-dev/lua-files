@@ -51,7 +51,6 @@ local STEP = 0.05             -- langkah simulasi (detik)
 local MIN_SPEED = 8           -- bola harus benar-benar bergerak
 local LOCAL_COOLDOWN = 0.7    -- jeda minimum antar pemicu
 
-local heartbeatConn = nil
 local lastTrigger = 0
 
 local function simEarliestArrival(ballPos, ballVel, rootPos)
@@ -123,26 +122,27 @@ local function tryTriggerReceive()
 end
 
 local function startAutoReceive()
-	if heartbeatConn then
+	if S[RECEIVE_CONN] then
 		return
 	end
-	heartbeatConn = RunService.Heartbeat:Connect(tryTriggerReceive)
+	S[RECEIVE_CONN] = RunService.Heartbeat:Connect(tryTriggerReceive)
 end
 
 local function stopAutoReceive()
-	if heartbeatConn then
-		heartbeatConn:Disconnect()
-		heartbeatConn = nil
+	local conn = S[RECEIVE_CONN]
+	if conn then
+		S[RECEIVE_CONN] = nil
+		pcall(function()
+			conn:Disconnect()
+		end)
 	end
 end
 
 local function initAutoReceive()
 	local t0 = os.clock()
-	if getgenv().VLAutoReceiveInstalled then
-		suiteModuleLoaded("auto-receive")
-		return
-	end
-	getgenv().VLAutoReceiveInstalled = true
+	-- RE-RUN SAFE: selalu daftarkan ulang FeatureAPI + terapkan
+	-- ulang state tersimpan (fungsi instance lama mati bersama
+	-- localnya; koneksi disimpan di S agar lintas instance).
 	local deadline = t0 + 30
 	while not LocalStateLoaded and os.clock() < deadline do
 		task.wait(0.25)
@@ -157,12 +157,8 @@ local function initAutoReceive()
 		end
 	end
 
-	-- Keadaan awal dari saklar tersimpan.
-	if S.localStateLoaded then
-		if S.settings[SETTING_MEMBER_AUTO_RECEIVE] == true then
-			startAutoReceive()
-		end
-	end
+	-- Keadaan awal dari saklar tersimpan (idempoten).
+	FeatureAPI.setAutoReceiveEnabled(S.settings[SETTING_MEMBER_AUTO_RECEIVE] == true)
 
 	print(("[VL Suite] auto-receive ready in %.2fs (shared wait %.2fs)"):format(os.clock() - t0, sharedWait))
 	suiteModuleLoaded("auto-receive")
