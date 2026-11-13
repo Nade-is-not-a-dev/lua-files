@@ -24,11 +24,8 @@
 -- sering di-clamp -- skala 3x sudah melampaui jarak 20 stud di
 -- sebagian besar arah.
 --
--- VISUAL: saat aktif, flag _DebugHitboxes di
--- ReplicatedStorage/Configuration/Game dinyalakan (mekanisme
--- debug milik game sendiri -- konsol ToggleHitboxes), jadi part
--- hitbox tergambar transparan neon dan ukurannya kelihatan.
--- Mati = flag dikembalikan nil.
+-- VISUAL: hanya cincin jangkauan di bola (di bawah). Kotak debug
+-- hitbox milik game (part di karakter) TIDAK dinyalakan.
 --
 -- Saklar: "Hitbox Expander" di grup VL Settings (anggota
 -- HitboxExpander, persisten di S.settings; skala persisten di
@@ -182,13 +179,8 @@ local function initHitboxExpander()
 	local installedWrap = false
 	FeatureAPI.setHitboxExpanderEnabled = function(enabled)
 		applyHitboxScale(enabled)
-		pcall(function()
-			-- Visual debug milik game: hitbox part digambar
-			-- transparan neon saat _DebugHitboxes truthy.
-			local gameConfig = require(RS:WaitForChild("Configuration"):WaitForChild("Game"))
-			gameConfig._DebugHitboxes = enabled or nil
-		end)
-		-- Cincin jangkauan menempel di bola (lihat atas).
+		-- Cincin jangkauan menempel di bola (lihat atas). Kotak
+		-- debug hitbox milik game (di karakter) TIDAK dinyalakan.
 		pcall(function()
 			if enabled then
 				startRing()

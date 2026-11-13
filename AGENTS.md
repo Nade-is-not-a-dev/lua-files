@@ -132,9 +132,10 @@ tidak ada kode server; Knit *service* diverifikasi lewat callsite).
      perubahan tetap moderat.
 - Debug visual hitbox milik game: `Configuration.Game._DebugHitboxes
   = true` (konsol ToggleHitboxes) → part hitbox digambar transparan
-  neon (`IsDebugMode` hanya true di Studio). Dipakai modul
-  hitbox-expander, ditambah cincin jangkauan sendiri: sphere
-  semi-transparan radius 20 yang mengikuti tiap bola bertag `Ball`
+  neon (`IsDebugMode` hanya true di Studio). Modul hitbox-expander
+  TIDAK memakainya (kotak di karakter tidak dinyalakan); visualnya
+  cincin jangkauan sendiri: sphere semi-transparan radius 20 yang
+  mengikuti tiap bola bertag `Ball`
   (warna dari `isPointOnTeamSide` + `DistanceFromCharacter`).
 - Timer: `DefaultHitboxDuration = 0.3` s; Block/JumpSet juga
   berhenti saat `States.IsJumping` false.
