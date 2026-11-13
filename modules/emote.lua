@@ -35,11 +35,6 @@ local function applyEmotes()
 end
 
 ----------------------------------------------------------------
--- Alert kekurangan (PromptController resmi game -- dialog yang
--- sama dengan konfirmasi spin style/ability). Ditampilkan SEBELUM
--- equip palsu untuk item yang diketahui punya kekurangan, agar
--- tidak kaget belakangan. Batal = equip tidak terjadi.
-----------------------------------------------------------------
 -- Emote yang Metadata.Callback-nya menelurkan properti di karakter
 -- (dari definisi item di Content/Item/Entities). Untuk equip
 -- palsu propertinya hanya jalan lokal (lihat bungkus Use di

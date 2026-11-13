@@ -201,7 +201,7 @@ end
 ----------------------------------------------------------------
 -- Cek pemilik bola (siapa yang serve)
 ----------------------------------------------------------------
-local function serverNameNow()
+local function serverNameNow(ball)
 	-- Mode Training dicek PALING DULU: atribut ServedByPlayer bisa
 	-- berisi nama basi / bukan pemilik bola latihan, dan game sendiri
 	-- (kode HeadBall) menganggap server di Training = pemain lokal.
@@ -211,7 +211,9 @@ local function serverNameNow()
 	if ok and current == Gamemode.Types.Training then
 		return player.Name
 	end
-	local name = RS:GetAttribute("ServedByPlayer")
+	-- Game membaca atribut ini dari INSTANSI bola (HeadBall) --
+	-- BallController/_source.lua:40 -- bukan dari ReplicatedStorage.
+	local name = ball and ball:GetAttribute("ServedByPlayer")
 	if type(name) == "string" and name ~= "" then
 		return name
 	end
@@ -222,10 +224,10 @@ local function skinIsMine(skinId)
 	return skinId ~= nil and skinId == (S.serverEquipped.Ball or "ClassicBall")
 end
 
-local function recordServe(skinId)
+local function recordServe(skinId, ball)
 	table.insert(S.serveLog, {
 		t = os.clock(),
-		server = serverNameNow(),
+		server = serverNameNow(ball),
 		skin = skinId,
 	})
 	while #S.serveLog > 16 do
@@ -271,12 +273,6 @@ local function replayBelongsToMe(clip, skinName)
 	-- Arsip / log tidak ketemu: fallback ke pencocokan skin.
 	return skinIsMine(skinName)
 end
-
-local ALERT_BALL_SURFACE = "This ball's surface effect is normally sent by the server. The script recreates it locally: only you see it, and only on hard impacts. Equip anyway?"
-
-local ALERT_EMOTE_PROP = "This emote's prop is normally run by the server. The script runs it locally: only you see the prop; others only see the animation. Equip anyway?"
-
-local ALERT_FX_WORLD = "This score effect physically affects players. The spoof shows only on your screen and only affects your own character. Equip anyway?"
 
 	local function getBallController()
 		if not BallControllerLazy then
@@ -437,11 +433,11 @@ local function initBallSpoof()
 	BallModule.new = function(model, cframe, velocity, itemData)
 		-- Catat serve ini dulu (untuk cek pemilik di Replay nanti).
 		local skinId = itemData and itemData.Id
-		recordServe(skinId)
+		recordServe(skinId, model)
 		-- Cakupan: kecuali SPOOF_RALLY_ALL, hanya ganti bola milikku --
-		-- pemilik dari ServedByPlayer; bila atribut kosong, cadangan
-		-- pencocokan skin.
-		local server = serverNameNow()
+		-- pemilik dari atribut ServedByPlayer di instansi bola; bila
+		-- atribut kosong, cadangan pencocokan skin.
+		local server = serverNameNow(model)
 		local inScope = SPOOF_RALLY_ALL
 			or (server ~= nil and server == player.Name)
 			or (server == nil and skinIsMine(skinId))

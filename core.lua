@@ -31,9 +31,9 @@
 
     (Soal favorite: game ini memang TIDAK punya favorite untuk bola.
     Dari kode UI-nya sendiri, tombol FavBtn hanya muncul bila item
-    yang dipilih bertipe ScoreEffect. Jadi spoof ini tidak menyentuh
-    sistem favorite sama sekali -- favorite ScoreEffect-mu bekerja
-    100% asli.)
+    yang dipilih bertipe ScoreEffect (PlayerCard punya tombol
+    FaveBtn tersendiri). Jadi spoof ini tidak menyentuh sistem
+    favorite sama sekali -- favorite-mu bekerja 100% asli.)
 
     1. INVENTORY: semua id bola (Content.Item tipe Ball) disuntikkan ke
        state Inventory milik InventoryController, jadi grid inventory
@@ -49,16 +49,14 @@
        skin itu. Fisika/posisi tetap dari stream server, jadi bola
        tetap bisa dipukul seperti biasa.
        CAKUPAN: default-nya bola diganti HANYA bila pemiliknya kamu.
-       Pemilik dibaca dari atribut "ServedByPlayer" milik game sendiri
-       (nama pemain yang sedang serve saat bola muncul); mode Training
-       selalu dianggap bolamu (sesuai logika game di HeadBall); bila
-       atribut tidak tersedia, cadangan terakhir adalah mencocokkan
-       skin stream dengan bola aslimu yang ter-equip. Ubah
-       SPOOF_RALLY_ALL ke true bila ingin semua bola rally diganti.
-    4. BOLA DISPLAY: Item.Asset milik bola asli yang ter-equip ditukar
-       ke asset skin palsu, jadi display bola berbasis Item ikut tampil
-       sebagai skin palsu.
-    5. BOLA SERVE DI TANGAN: bola yang dipegang saat serve BUKAN dari
+       Pemilik dibaca dari atribut "ServedByPlayer" di instansi bola
+       (sesuai kode game di BallController -- nama pemain yang sedang
+       serve saat bola muncul); mode Training selalu dianggap bolamu
+       (sesuai logika game di HeadBall); bila atribut tidak tersedia,
+       cadangan terakhir adalah mencocokkan skin stream dengan bola
+       aslimu yang ter-equip. Ubah SPOOF_RALLY_ALL ke true bila ingin
+       semua bola rally diganti.
+    4. BOLA SERVE DI TANGAN: bola yang dipegang saat serve BUKAN dari
        jalur di atas -- server membuatnya sendiri, me-weld-nya ke
        tangan karakter, dan menandainya dengan tag "WeldedBall".
        Script mengawasi tag itu pada karakter lokal: visual asli
@@ -68,7 +66,7 @@
        weld & struktur utuh, dan clone skin palsu ditempel dengan
        WeldConstraint ke part jangkar yang sama, jadi bola palsu
        mengikuti tangan persis seperti aslinya.
-    6. REPLAY: bola di layar Replay TIDAK lewat Ball.new -- ia dibuat
+    5. REPLAY: bola di layar Replay TIDAK lewat Ball.new -- ia dibuat
        GhostBall dari nama skin yang direkam Recorder langsung dari
        paket stream (skin asli). GhostBall.new dibungkus: nama skin
        yang masuk ditukar ke skin palsu, dan GhostBall sendiri yang
@@ -82,7 +80,7 @@
        KAMU bola replay di-spoof; serve orang lain tidak. Bila log /
        arsip tidak ketemu, fallback ke pencocokan skin seperti bola
        rally.
-    7. EFEK PERMUKAAN (mis. bekas slime): event SurfaceHit dari server
+    6. EFEK PERMUKAAN (mis. bekas slime): event SurfaceHit dari server
        ternyata TERGATE di sisi server -- server hanya mengirimnya
        untuk bola yang item aslinya lolos BallLib.hasSurfaceHit
        (punya Handler.SurfaceHit atau suara kontak). Bola polos yang
@@ -122,13 +120,7 @@
         dijalankan server lewat InventoryService:Use) dijalankan
         script secara LOKAL dari Handler.run item-nya: properti
         muncul di karakter, tapi hanya terlihat di layar ini.
-    11. ALERT KEKURANGAN: item yang diketahui punya kekurangan
-        (bola berefek permukaan seperti SlimeBall; emote berproperti)
-        memunculkan dialog PromptController resmi game -- dialog
-        yang sama dengan konfirmasi spin style/ability -- SEBELUM
-        equip palsu diterapkan, berisi penjelasan kekurangannya.
-        "Equip Anyway" melanjutkan, "Cancel" membatalkan equip.
-    14. SCORE FX (ScoreEffect): semua efek (165) disuntikkan ke
+    11. SCORE FX (ScoreEffect): semua efek (165) disuntikkan ke
         inventory. Equip palsu slot tunggal (persisten): efek yang
         dimainkan di poin sendiri adalah efek SPOOF itu sendiri
         (spesifik apa adanya; Random Favorite mengacak dari
@@ -154,16 +146,14 @@
         poin, jadi penukaran hanya mengubah yang tampil di layar
         ini. Favorit efek yang belum dimiliki disimpan lokal
         (sistem yang sama dengan kartu, digabung ke Value
-        Favorited yang sama). Efek berpengaruh fisik yang di-equip
-        palsu memunculkan alert dulu (pengaruhnya hanya berlaku
-        ke karakter sendiri). SUARA: suara poin yang diregistrasi
+        Favorited yang sama). SUARA: suara poin yang diregistrasi
         game berasal dari efek server, jadi pembawa dipilih yang
         HENING (tanpa Id suara) bila ada, dan wrapper memainkan
         suara poin efek SPOOF dengan cara yang persis sama dengan
         HitGround.play (registrasi Metadata.Sound, Volume 4,
         PlaybackSpeed 0.9-1.1, diputar di titik skor); suara dari
         dalam modul efek memang selalu mengikuti efek spoof.
-    13. BAGIAN SETTINGS TAMBAHAN ("VL Settings"): halaman Settings
+    12. BAGIAN SETTINGS TAMBAHAN ("VL Settings"): halaman Settings
         game bersifat data-driven (grup GroupPages dari tabel
         SettingsGroups), jadi script mendaftarkan satu grup baru dan
         membiarkan pembangun halaman game sendiri yang membuat
@@ -185,7 +175,7 @@
         EffectController.PlayScoreEffect digerbang: efek-efek itu
         tidak dimainkan sama sekali di client ini saat bermain
         langsung (Replay dan preview lobby tidak disentuh).
-    12. KARTU PEMAIN (PlayerCard): semua kartu (118) disuntikkan ke
+    13. KARTU PEMAIN (PlayerCard): semua kartu (118) disuntikkan ke
         inventory seperti kategori lain. Halaman kartu punya panel
         sendiri: equip-nya dibaca dengan :expect() dan nilai truthy
         dianggap pesan error, jadi jalur palsu mengembalikan promise
@@ -217,18 +207,7 @@
       menumpuk bungkus fungsi, cukup menerapkan ulang dari state yang
       sama.
 
-    15. LOADING OVERLAY (Bagian 0): layar penuh menutupi game
-        sejak script mulai; bar progresnya mengikuti milestone
-        NYATA Bagian A (controller siap -> profil tersinkron ->
-        hooks terpasang -> setup diterapkan -> Ready), bukan
-        animasi acak. Grup tengah memudar masuk sekali, lalu
-        memudar keluar + membesar sedikit saat selesai (tampil
-        minimum 1,4 detik; failsafe keluar sendiri pada 60 detik;
-        catatan "still working" muncul bila lewat 20 detik).
-        Murni kosmetik dan dibungkus pcall -- kegagalannya tidak
-        pernah menghalangi script utama.
-
-    16. AVATAR LITE (Bagian D -- "Catalog Avatar Creator" versi
+    14. AVATAR LITE (Bagian D -- "Catalog Avatar Creator" versi
         ringan di dalam game): ganti avatar secara "gratis" dan
         CLIENT-SIDE saja. Panel (tombol melayang AVATAR, atau baris
         "VL Avatar / Avatar Lite [Open]" di halaman utama Settings

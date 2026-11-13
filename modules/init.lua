@@ -35,15 +35,7 @@ local function installEquipSystem()
 					applyEquipped()
 					saveLocal()
 				end
-				-- Bola berefek permukaan (Handler.SurfaceHit, mis.
-				-- SlimeBall): efeknya tergate server -> alert dulu.
-				local item = ContentItem:Get(id)
-				local handler = item and item.Metadata and item.Metadata.Handler
-				if handler and handler.SurfaceHit then
-					showSpoofAlert(item.DisplayName or id, ALERT_BALL_SURFACE, doEquip)
-				else
-					doEquip()
-				end
+				doEquip()
 			end
 			return resolvedPromise(true)
 		end
@@ -93,13 +85,7 @@ local function installEquipSystem()
 					if FeatureAPI.applyEmotes then FeatureAPI.applyEmotes() end
 					saveLocal()
 				end
-				-- Emote berproperti: efeknya server-driven -> alert.
-				if FeatureAPI.propEmotes and FeatureAPI.propEmotes[id] then
-					local item = ContentItem:Get(id)
-					showSpoofAlert((item and item.DisplayName) or id, ALERT_EMOTE_PROP, doEquip)
-				else
-					doEquip()
-				end
+				doEquip()
 			end
 			return resolvedPromise(true)
 		end
@@ -126,20 +112,10 @@ local function installEquipSystem()
 				applyEquipped()
 				saveLocal()
 			else
-				local function doEquip()
-					S.fakeScoreFx = id
-					applyEquipped()
-					saveLocal()
-					if FeatureAPI.ensureFxCarrier then task.defer(FeatureAPI.ensureFxCarrier) end
-				end
-				-- Efek berpengaruh fisik: pengaruhnya hanya berlaku
-				-- lokal untuk versi spoof -> alert dulu.
-				if WORLD_AFFECTING_FX[id] then
-					local item = ContentItem:Get(id)
-					showSpoofAlert((item and item.DisplayName) or id, ALERT_FX_WORLD, doEquip)
-				else
-					doEquip()
-				end
+				S.fakeScoreFx = id
+				applyEquipped()
+				saveLocal()
+				if FeatureAPI.ensureFxCarrier then task.defer(FeatureAPI.ensureFxCarrier) end
 			end
 			return resolvedPromise(true)
 		end

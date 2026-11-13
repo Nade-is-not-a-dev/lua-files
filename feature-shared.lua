@@ -164,8 +164,6 @@ if not S then
 		statsSettingsRowBuilt = false,
 		farmSettingsRowBuilt = false,
 		installed = false,
-		patchedAssetId = nil,
-		patchedAssetOriginal = nil,
 	}
 	getgenv().VLBallSpoofState = S
 end
@@ -345,35 +343,6 @@ end
 ----------------------------------------------------------------
 -- Terapkan state lokal ke controller (yang dibaca UI)
 ----------------------------------------------------------------
-local function restoreAssetPatch()
-	if S.patchedAssetId then
-		local item = ContentItem:Get(S.patchedAssetId)
-		if item and S.patchedAssetOriginal ~= nil then
-			item.Asset = S.patchedAssetOriginal
-		end
-		S.patchedAssetId = nil
-		S.patchedAssetOriginal = nil
-	end
-end
-
-local function applyAssetPatch()
-	restoreAssetPatch()
-	if not S.fakeEquipped then
-		return
-	end
-	local realId = S.serverEquipped.Ball or "ClassicBall"
-	if realId == S.fakeEquipped then
-		return
-	end
-	local realItem = ContentItem:Get(realId)
-	local fakeItem = ContentItem:Get(S.fakeEquipped)
-	if realItem and fakeItem and fakeItem.Asset then
-		S.patchedAssetOriginal = realItem.Asset
-		S.patchedAssetId = realId
-		realItem.Asset = fakeItem.Asset
-	end
-end
-
 -- Perbandingan dangkal untuk menjaga Value Fusion: :set hanya
 -- bila isi benar-benar berubah, supaya UI tidak membangun ulang
 -- (dan ikon tidak tampak memuat ulang) tanpa perlu.
@@ -415,11 +384,6 @@ local function applyEquipped()
 		InventoryController.Equipped:set(merged)
 	end
 	if SuiteActive.Ball then
-		if S.extremeFast then
-			restoreAssetPatch()
-		else
-			applyAssetPatch()
-		end
 		if FeatureAPI.scanWeldedBalls then FeatureAPI.scanWeldedBalls() end
 	end
 end
@@ -554,25 +518,6 @@ end
 local jerseyPropsCache = nil -- {Name=, Number=, TeamName=}
 local jerseySeq = 0 -- nomor urut permintaan pasang; yang terbaru menang
 local lastJerseyApply = 0
-
-local function showSpoofAlert(displayName, body, onConfirm)
-	if PromptController and PromptController.Open then
-		local ok = pcall(function()
-			PromptController:Open({
-				Header = "Warning -- " .. displayName,
-				Body = body,
-				Option1 = "Equip Anyway",
-				Option2 = "Cancel",
-				Callback1 = onConfirm,
-			})
-		end)
-		if ok then
-			return
-		end
-	end
-	-- PromptController tidak tersedia: jangan menghalangi equip.
-	onConfirm()
-end
 
 ----------------------------------------------------------------
 -- Bungkus fungsi (hanya sekali; jalan ulang cukup menerapkan ulang)
