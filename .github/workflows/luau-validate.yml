@@ -1,0 +1,42 @@
+name: Luau local build + validate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build combined file
+        run: python3 build.py
+
+      - name: Fetch luau toolchain (0.746, matches build-suite.yml)
+        run: |
+          curl -sSL -o /tmp/luau.zip https://github.com/luau-lang/luau/releases/download/0.746/luau-ubuntu.zip
+          unzip -o /tmp/luau.zip -d /tmp/luau
+          chmod +x /tmp/luau/luau*
+
+      - name: Compile check (same as build-suite.yml)
+        run: |
+          /tmp/luau/luau-compile dist/vl-suite.lua > /dev/null
+          echo "luau-compile OK"
+
+      - name: Analyze check
+        run: |
+          /tmp/luau/luau-analyze --no-strict dist/vl-suite.lua > /tmp/analyze.log 2>&1 || true
+          cat /tmp/analyze.log
+          echo "--- summary ---"
+          wc -l /tmp/analyze.log
+
+      - name: Upload analysis log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: luau-analyze-log
+          path: /tmp/analyze.log
