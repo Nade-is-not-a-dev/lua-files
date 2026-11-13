@@ -38,7 +38,7 @@ local function registerSettingsGroup()
 		if not groups.Data[SETTINGS_GROUP] then
 			groups.Data[SETTINGS_GROUP] = {
 				DisplayName = "VL Settings",
-				Members = { SETTING_MEMBER_WORLD_FX, SETTING_MEMBER_EXTREME, SETTING_MEMBER_SHIFTLOCK },
+				Members = { SETTING_MEMBER_WORLD_FX, SETTING_MEMBER_EXTREME, SETTING_MEMBER_SHIFTLOCK, SETTING_MEMBER_HITBOX },
 			}
 			table.insert(groups.Order, SETTINGS_GROUP)
 		end
@@ -54,6 +54,9 @@ local function registerSettingsGroup()
 			if type(nameMap) == "table" and nameMap[SETTING_MEMBER_SHIFTLOCK] == nil then
 				nameMap[SETTING_MEMBER_SHIFTLOCK] = "Auto Shiftlock"
 			end
+			if type(nameMap) == "table" and nameMap[SETTING_MEMBER_HITBOX] == nil then
+				nameMap[SETTING_MEMBER_HITBOX] = "Hitbox Expander"
+			end
 		end)
 		pcall(function()
 			-- Asuransi label di halaman utama (peta milik
@@ -68,6 +71,9 @@ local function registerSettingsGroup()
 			end
 			if type(mainMap) == "table" and mainMap[SETTINGS_KEY_SHIFTLOCK] == nil then
 				mainMap[SETTINGS_KEY_SHIFTLOCK] = "Auto Shiftlock"
+			end
+			if type(mainMap) == "table" and mainMap[SETTINGS_KEY_HITBOX] == nil then
+				mainMap[SETTINGS_KEY_HITBOX] = "Hitbox Expander"
 			end
 		end)
 	end)
@@ -90,13 +96,15 @@ local function applyVLSettings()
 		local current = InterfaceController.Settings:get() or {}
 		if current[SETTINGS_KEY_WORLD_FX] == S.settings[SETTING_MEMBER_WORLD_FX]
 			and current[SETTINGS_KEY_EXTREME] == S.settings[SETTING_MEMBER_EXTREME]
-			and current[SETTINGS_KEY_SHIFTLOCK] == S.settings[SETTING_MEMBER_SHIFTLOCK] then
+			and current[SETTINGS_KEY_SHIFTLOCK] == S.settings[SETTING_MEMBER_SHIFTLOCK]
+			and current[SETTINGS_KEY_HITBOX] == S.settings[SETTING_MEMBER_HITBOX] then
 			return
 		end
 		local merged = table.clone(current)
 		merged[SETTINGS_KEY_WORLD_FX] = S.settings[SETTING_MEMBER_WORLD_FX]
 		merged[SETTINGS_KEY_EXTREME] = S.settings[SETTING_MEMBER_EXTREME]
 		merged[SETTINGS_KEY_SHIFTLOCK] = S.settings[SETTING_MEMBER_SHIFTLOCK]
+		merged[SETTINGS_KEY_HITBOX] = S.settings[SETTING_MEMBER_HITBOX]
 		InterfaceController.Settings:set(merged)
 	end)
 end
@@ -402,6 +410,15 @@ local function initSettings()
 					saveLocal()
 					if FeatureAPI.setAutoShiftlockEnabled then
 						task.spawn(FeatureAPI.setAutoShiftlockEnabled, value == true)
+					end
+					return resolvedPromise(true)
+				end
+				if key == SETTINGS_KEY_HITBOX then
+					S.settings[SETTING_MEMBER_HITBOX] = value == true
+					applyVLSettings()
+					saveLocal()
+					if FeatureAPI.setHitboxExpanderEnabled then
+						task.spawn(FeatureAPI.setHitboxExpanderEnabled, value == true)
 					end
 					return resolvedPromise(true)
 				end

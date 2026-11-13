@@ -102,6 +102,10 @@ local SETTING_MEMBER_EXTREME = "ExtremeUltraFastMode"
 local SETTINGS_KEY_EXTREME = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_EXTREME
 local SETTING_MEMBER_SHIFTLOCK = "AutoShiftlock"
 local SETTINGS_KEY_SHIFTLOCK = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_SHIFTLOCK
+-- Hitbox Expander: saklar grup (persisten). Skalanya hidup di
+-- S.hitboxScale (angka; 1 = ukuran asli, dibatasi 1..3).
+local SETTING_MEMBER_HITBOX = "HitboxExpander"
+local SETTINGS_KEY_HITBOX = SETTINGS_GROUP .. "_" .. SETTING_MEMBER_HITBOX
 -- Username Spoofer: BUKAN kunci Settings game (tidak ada saklar
 -- grupnya); nilainya hanya hidup di simpanan lokal S.settings.
 local SETTING_MEMBER_USERNAME = "UsernameSpoof"
@@ -156,7 +160,7 @@ if not S then
 		fakeFxFavorites = {}, -- [idFx] = true, favorit Score FX lokal
 		fxCarrier = nil, -- id Score FX asli yang terakhir dipasang script sebagai pembawa (info saja)
 		serverFavorited = {}, -- favorit asli dari server
-		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, UsernameSpoof = "", StatsSpoof = {} }, -- saklar bagian Settings tambahan + spoof nama/statistik
+		settings = { WorldAffectingScoreFX = true, ExtremeUltraFastMode = false, AutoShiftlock = false, HitboxExpander = false, UsernameSpoof = "", StatsSpoof = {} }, -- saklar bagian Settings tambahan + spoof nama/statistik
 		settingsSectionBuilt = false,
 		settingsGroupRegistered = false,
 		avatarSettingsRowBuilt = false,
@@ -181,6 +185,9 @@ if S.fakeFxFavorites == nil then
 end
 if S.serverFavorited == nil then
 	S.serverFavorited = {}
+end
+if S.hitboxScale == nil then
+	S.hitboxScale = 1.9 -- pengali ukuran hitbox saat HitboxExpander aktif
 end
 if S.settings == nil then
 	S.settings = { WorldAffectingScoreFX = true }
@@ -245,6 +252,7 @@ local function saveLocal()
 			fxFavorites = fxFavorites,
 			fxCarrier = S.fxCarrier,
 			settings = S.settings,
+			hitboxScale = S.hitboxScale,
 		}))
 	end)
 end
@@ -300,6 +308,16 @@ local function loadLocal()
 				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_SHIFTLOCK]) == "boolean" then
 					S.settings[SETTING_MEMBER_SHIFTLOCK] = data.settings[SETTING_MEMBER_SHIFTLOCK]
+				end
+				if type(data.settings) == "table"
+					and type(data.settings[SETTING_MEMBER_HITBOX]) == "boolean" then
+					S.settings[SETTING_MEMBER_HITBOX] = data.settings[SETTING_MEMBER_HITBOX]
+				end
+				if type(data.hitboxScale) == "number" then
+					local v = data.hitboxScale
+					if v >= 1 and v <= 3 then
+						S.hitboxScale = v
+					end
 				end
 				if type(data.settings) == "table"
 					and type(data.settings[SETTING_MEMBER_USERNAME]) == "string" then
