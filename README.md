@@ -62,9 +62,10 @@ Inti suite di root repo, modul fitur di `modules/`:
   (saklar di grup VL Settings). Membungkus ClientHitbox.new dan
   menggandakan ukuran HitboxSize hitbox deteksi pukulan sendiri
   (skala 1..3, persisten di S.hitboxScale, default 1.9; gerbang
-  jarak 20/30 stud milik canInteract tetap jalan). Saat aktif,
-  flag _DebugHitboxes milik game dinyalakan supaya hitbox
-  tergambar. Bukan kategori inventory.
+  jarak 20/30 stud milik canInteract tetap jalan). Visual: flag
+  _DebugHitboxes milik game + cincin jangkauan semi-transparan
+  yang menempel di tiap bola (hijau = dalam jangkauan & sisi tim
+  sendiri, biru = belum). Bukan kategori inventory.
 - `modules/username-spoof.lua` — modul fitur: Username
   Spoofer. Panel (dibuka dari Settings > VL Username > Open)
   berisi TextBox + tombol Apply yang merupakan klon kotak

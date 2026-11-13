@@ -35,12 +35,130 @@
 -- S.hitboxScale, default 1.9, dibatasi 1..3 -- ubah lewat
 -- FeatureAPI.setHitboxScale). Titik masuk saklar:
 -- FeatureAPI.setHitboxExpanderEnabled(bool) dari bungkus
--- ChangeSetting di modules/settings.lua. Bukan kategori
--- inventory: tanpa suiteActivateFeature.
+-- ChangeSetting di modules/settings.lua.
+--
+-- CINCIN JANGKAUAN: sphere semi-transparan (radius 20 stud)
+-- menempel di tiap bola bertag "Ball" per Heartbeat. Hijau bila
+-- karakter di dalam cincin DAN bola di sisi tim sendiri
+-- (Common.Physics.isPointOnTeamSide milik game), biru bila belum.
+-- Bukan kategori inventory: tanpa suiteActivateFeature.
 ----------------------------------------------------------------
 
 local function applyHitboxScale(enabled)
 	S._hitboxScaleActive = enabled and S.hitboxScale or 1
+end
+
+----------------------------------------------------------------
+-- VISUAL: cincin jangkauan yang menempel di bola.
+-- Sphere semi-transparan radius = jangkauan pukulan (20 stud,
+-- gerbang DistanceFromCharacter milik canInteract). Cincin ikut
+-- bola (tag "Ball" -- kandidat yang bisa dipukul hitbox) tiap
+-- Heartbeat. Warna: HIJAU bila bola saat ini DALAM JANGKAUAN
+-- (karakter di dalam cincin) dan di sisi tim sendiri (cek lewat
+-- Common.Physics.isPointOnTeamSide milik game); BIRU bila belum.
+----------------------------------------------------------------
+local RING_REACH = 20
+local RING_COLOR_OK = Color3.fromRGB(90, 255, 130)
+local RING_COLOR_FAR = Color3.fromRGB(120, 175, 255)
+local RunService = game:GetService("RunService")
+
+local ringParts = {} -- [instansi bola] = part cincin
+local ringHeartbeatConn, ringAddedConn, ringRemovedConn
+local Physics -- Common.Physics milik game (diisi saat init)
+
+local function removeRing(ball)
+	local part = ringParts[ball]
+	if part then
+		ringParts[ball] = nil
+		if part.Parent then
+			part:Destroy()
+		end
+	end
+end
+
+local function ensureRing(ball)
+	if ringParts[ball] or not ball:IsDescendantOf(workspace) then
+		return
+	end
+	local part = Instance.new("Part")
+	part.Name = "VLHitboxRing"
+	part.Shape = Enum.PartType.Ball
+	part.Size = Vector3.new(RING_REACH * 2, RING_REACH * 2, RING_REACH * 2)
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CanQuery = false
+	part.Anchored = true
+	part.CastShadow = false
+	part.Material = Enum.Material.Neon
+	part.Transparency = 0.85
+	part.Color = RING_COLOR_FAR
+	part.Parent = workspace
+	ringParts[ball] = part
+end
+
+local function ringHeartbeat()
+	-- Posisi bola + jarak karakter dihitung tanpa alokasi berlebih.
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local rootPos = root and root.Position
+	local mapOk = workspace:FindFirstChild("Map") ~= nil
+	for ball, part in pairs(ringParts) do
+		if not ball.Parent or not ball:IsDescendantOf(workspace) or not part.Parent then
+			removeRing(ball)
+		else
+			local pos
+			if ball:IsA("BasePart") then
+				pos = ball.Position
+			else
+				local ok, pivot = pcall(ball.GetPivot, ball)
+				pos = ok and pivot.Position
+			end
+			if pos then
+				part.CFrame = CFrame.new(pos)
+				local inRange = rootPos ~= nil
+					and (rootPos - pos).Magnitude < RING_REACH
+				local onSide = false
+				if mapOk then
+					local ok, result = pcall(Physics.isPointOnTeamSide, player, pos, "Bump")
+					onSide = ok and result == true
+				end
+				part.Color = (inRange and onSide) and RING_COLOR_OK or RING_COLOR_FAR
+			else
+				removeRing(ball)
+			end
+		end
+	end
+end
+
+local function startRing()
+	if ringHeartbeatConn then
+		return
+	end
+	-- Bola yang sudah ada + bola yang muncul belakangan.
+	for _, ball in ipairs(CollectionService:GetTagged("Ball")) do
+		ensureRing(ball)
+	end
+	ringAddedConn = CollectionService:GetInstanceAddedSignal("Ball"):Connect(ensureRing)
+	ringRemovedConn = CollectionService:GetInstanceRemovedSignal("Ball"):Connect(removeRing)
+	ringHeartbeatConn = RunService.Heartbeat:Connect(ringHeartbeat)
+end
+
+local function stopRing()
+	if ringHeartbeatConn then
+		ringHeartbeatConn:Disconnect()
+		ringHeartbeatConn = nil
+	end
+	if ringAddedConn then
+		ringAddedConn:Disconnect()
+		ringAddedConn = nil
+	end
+	if ringRemovedConn then
+		ringRemovedConn:Disconnect()
+		ringRemovedConn = nil
+	end
+	for ball in pairs(ringParts) do
+		removeRing(ball)
+	end
 end
 
 local function initHitboxExpander()
@@ -57,6 +175,10 @@ local function initHitboxExpander()
 	end
 	local sharedWait = os.clock() - t0
 
+	pcall(function()
+		Physics = require(RS:WaitForChild("Common"):WaitForChild("Physics"))
+	end)
+
 	local installedWrap = false
 	FeatureAPI.setHitboxExpanderEnabled = function(enabled)
 		applyHitboxScale(enabled)
@@ -65,6 +187,14 @@ local function initHitboxExpander()
 			-- transparan neon saat _DebugHitboxes truthy.
 			local gameConfig = require(RS:WaitForChild("Configuration"):WaitForChild("Game"))
 			gameConfig._DebugHitboxes = enabled or nil
+		end)
+		-- Cincin jangkauan menempel di bola (lihat atas).
+		pcall(function()
+			if enabled then
+				startRing()
+			else
+				stopRing()
+			end
 		end)
 	end
 	FeatureAPI.setHitboxScale = function(scale)
